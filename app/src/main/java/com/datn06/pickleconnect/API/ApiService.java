@@ -1,5 +1,6 @@
 package com.datn06.pickleconnect.API;
 
+import com.datn06.pickleconnect.Home.HomeResponse;
 import com.datn06.pickleconnect.Login.LoginRequest;
 import com.datn06.pickleconnect.Login.LoginResponse;
 import com.datn06.pickleconnect.Register.RegisterRequest;
@@ -21,4 +22,11 @@ public interface ApiService {
     // Register
     @POST("api-andr/account/register")
     Call<RegisterResponse> register(@Body RegisterRequest request);
+
+    // Home
+    @GET("api-andr/home/data")
+    Call<HomeResponse> getHomePageData(
+            @Query("userLat") Double userLat,
+            @Query("userLng") Double userLng
+    );
 }

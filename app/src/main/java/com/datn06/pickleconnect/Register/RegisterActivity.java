@@ -4,17 +4,15 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Patterns;
 import android.view.View;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.Login.Login;
 import com.datn06.pickleconnect.R;
+import com.datn06.pickleconnect.Utils.AlertHelper;
+import com.datn06.pickleconnect.Utils.LoadingDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -23,15 +21,14 @@ public class RegisterActivity extends AppCompatActivity {
 
     private TextInputEditText etUsername, etPhone, etEmail, etFullName, etPassword, etConfirmPassword;
     private MaterialButton btnRegister;
-    private ProgressBar progressBar;
     private TextView tvLoginNow;
+    private LoadingDialog loadingDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        // Kết nối với XML
         etUsername = findViewById(R.id.etUsername);
         etPhone = findViewById(R.id.etPhone);
         etEmail = findViewById(R.id.etEmail);
@@ -39,31 +36,20 @@ public class RegisterActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
         btnRegister = findViewById(R.id.btnRegister);
-        progressBar = findViewById(R.id.progressBar);
         tvLoginNow = findViewById(R.id.tvLoginNow);
 
-        // Xử lý sự kiện click button Đăng ký
-        btnRegister.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                handleRegister();
-            }
-        });
+        loadingDialog = new LoadingDialog(this);
 
-        // Xử lý sự kiện click "Đăng nhập ngay"
-        tvLoginNow.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Quay lại màn hình đăng nhập
-                Intent intent = new Intent(RegisterActivity.this, Login.class);
-                startActivity(intent);
-                finish(); // Đóng màn hình đăng ký
-            }
+        btnRegister.setOnClickListener(v -> handleRegister());
+
+        tvLoginNow.setOnClickListener(v -> {
+            Intent intent = new Intent(RegisterActivity.this, Login.class);
+            startActivity(intent);
+            finish();
         });
     }
 
     private void handleRegister() {
-        // Lấy giá trị từ các EditText
         String username = etUsername.getText().toString().trim();
         String phone = etPhone.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
@@ -71,79 +57,56 @@ public class RegisterActivity extends AppCompatActivity {
         String password = etPassword.getText().toString();
         String confirmPassword = etConfirmPassword.getText().toString();
 
-        // Validate các trường
         if (!validateInputs(username, phone, email, fullName, password, confirmPassword)) {
             return;
         }
 
-        // Hiện loading
         showLoading(true);
 
-        // Tạo request object
         RegisterRequest request = new RegisterRequest(username, email, fullName, password, phone);
 
-        // GỌI API REGISTER
         ApiClient.getApiService().register(request).enqueue(new Callback<RegisterResponse>() {
             @Override
             public void onResponse(Call<RegisterResponse> call, Response<RegisterResponse> response) {
-                // Ẩn loading
                 showLoading(false);
 
-                // Kiểm tra response
                 if (response.isSuccessful() && response.body() != null) {
                     RegisterResponse registerResponse = response.body();
 
-                    // Kiểm tra code từ server
                     if ("201".equals(registerResponse.getCode()) || "200".equals(registerResponse.getCode())) {
+                        AlertHelper.showSuccess(RegisterActivity.this, "Đăng ký thành công! Vui lòng đăng nhập.");
 
-                        Toast.makeText(RegisterActivity.this,
-                                "Đăng ký thành công! Vui lòng đăng nhập.",
-                                Toast.LENGTH_LONG).show();
-
-                        // Chuyển về màn hình đăng nhập
-                        Intent intent = new Intent(RegisterActivity.this, Login.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                        finish(); // Đóng màn hình đăng ký
+                        new android.os.Handler().postDelayed(() -> {
+                            Intent intent = new Intent(RegisterActivity.this, Login.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                            finish();
+                        }, 2000);
 
                     } else {
-                        // Server trả về lỗi
-                        Toast.makeText(RegisterActivity.this,
-                                registerResponse.getMessage(), Toast.LENGTH_LONG).show();
+                        AlertHelper.showError(RegisterActivity.this, registerResponse.getMessage());
                     }
                 } else {
-                    // HTTP error
                     String errorMessage = "Đăng ký thất bại!";
-
-                    // Xử lý lỗi 409 (Conflict) - Email/Username/Phone đã tồn tại
                     if (response.code() == 409) {
                         errorMessage = "Email, số điện thoại hoặc tên đăng nhập đã tồn tại!";
                     } else if (response.code() == 400) {
                         errorMessage = "Thông tin không hợp lệ. Vui lòng kiểm tra lại!";
                     }
-
-                    Toast.makeText(RegisterActivity.this,
-                            errorMessage, Toast.LENGTH_LONG).show();
+                    AlertHelper.showError(RegisterActivity.this, errorMessage);
                 }
             }
 
             @Override
             public void onFailure(Call<RegisterResponse> call, Throwable t) {
-                // Ẩn loading
                 showLoading(false);
-
-                // Hiển thị lỗi
-                Toast.makeText(RegisterActivity.this,
-                        "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                AlertHelper.showError(RegisterActivity.this, "Lỗi kết nối: " + t.getMessage());
             }
         });
     }
 
-    // Hàm validate các trường input
     private boolean validateInputs(String username, String phone, String email,
                                    String fullName, String password, String confirmPassword) {
-
-        // Kiểm tra tên đăng nhập
         if (username.isEmpty()) {
             etUsername.setError("Vui lòng nhập tên đăng nhập");
             etUsername.requestFocus();
@@ -156,7 +119,6 @@ public class RegisterActivity extends AppCompatActivity {
             return false;
         }
 
-        // Kiểm tra số điện thoại
         if (phone.isEmpty()) {
             etPhone.setError("Vui lòng nhập số điện thoại");
             etPhone.requestFocus();
@@ -169,7 +131,6 @@ public class RegisterActivity extends AppCompatActivity {
             return false;
         }
 
-        // Kiểm tra email
         if (email.isEmpty()) {
             etEmail.setError("Vui lòng nhập email");
             etEmail.requestFocus();
@@ -182,7 +143,6 @@ public class RegisterActivity extends AppCompatActivity {
             return false;
         }
 
-        // Kiểm tra họ tên
         if (fullName.isEmpty()) {
             etFullName.setError("Vui lòng nhập họ tên đầy đủ");
             etFullName.requestFocus();
@@ -195,7 +155,6 @@ public class RegisterActivity extends AppCompatActivity {
             return false;
         }
 
-        // Kiểm tra mật khẩu
         if (password.isEmpty()) {
             etPassword.setError("Vui lòng nhập mật khẩu");
             etPassword.requestFocus();
@@ -203,12 +162,11 @@ public class RegisterActivity extends AppCompatActivity {
         }
 
         if (password.length() < 8) {
-            etPassword.setError("Mật khẩu phải có ít nhất 6 ký tự");
+            etPassword.setError("Mật khẩu phải có ít nhất 8 ký tự");
             etPassword.requestFocus();
             return false;
         }
 
-        // Kiểm tra xác nhận mật khẩu
         if (confirmPassword.isEmpty()) {
             etConfirmPassword.setError("Vui lòng nhập lại mật khẩu");
             etConfirmPassword.requestFocus();
@@ -224,10 +182,9 @@ public class RegisterActivity extends AppCompatActivity {
         return true;
     }
 
-    // Hàm hiển thị/ẩn loading
     private void showLoading(boolean isLoading) {
         if (isLoading) {
-            progressBar.setVisibility(View.VISIBLE);
+            loadingDialog.show();
             btnRegister.setEnabled(false);
             etUsername.setEnabled(false);
             etPhone.setEnabled(false);
@@ -236,7 +193,7 @@ public class RegisterActivity extends AppCompatActivity {
             etPassword.setEnabled(false);
             etConfirmPassword.setEnabled(false);
         } else {
-            progressBar.setVisibility(View.GONE);
+            loadingDialog.dismiss();
             btnRegister.setEnabled(true);
             etUsername.setEnabled(true);
             etPhone.setEnabled(true);
