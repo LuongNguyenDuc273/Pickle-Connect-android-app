@@ -26,6 +26,7 @@ import com.datn06.pickleconnect.Adapter.BannerAdapter;
 import com.datn06.pickleconnect.Adapter.FacilityAdapter;
 import com.datn06.pickleconnect.Model.FacilityDTO;
 import com.datn06.pickleconnect.Home.HomeResponse;
+import com.datn06.pickleconnect.Utils.LoadingDialog;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
@@ -55,6 +56,9 @@ public class HomeActivity extends AppCompatActivity {
     private FusedLocationProviderClient fusedLocationClient;
     private CancellationTokenSource cancellationTokenSource;
 
+    // Thêm LoadingDialog
+    private LoadingDialog loadingDialog;
+
     private final ActivityResultLauncher<String[]> locationPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 Boolean fineLocationGranted = result.get(Manifest.permission.ACCESS_FINE_LOCATION);
@@ -63,6 +67,8 @@ public class HomeActivity extends AppCompatActivity {
                 if ((fineLocationGranted != null && fineLocationGranted) ||
                         (coarseLocationGranted != null && coarseLocationGranted)) {
                     Log.d(TAG, "Permission granted");
+                    // Hiển thị loading ngay sau khi được cấp quyền
+                    showLoadingDialog("Đang lấy vị trí của bạn...");
                     getCurrentLocationAndLoad();
                 } else {
                     Log.w(TAG, "Permission denied");
@@ -70,6 +76,8 @@ public class HomeActivity extends AppCompatActivity {
                             Toast.LENGTH_LONG).show();
                     currentLat = DEFAULT_LAT;
                     currentLng = DEFAULT_LNG;
+                    // Hiển thị loading khi load dữ liệu
+                    showLoadingDialog("Đang tải dữ liệu...");
                     loadHomeData();
                 }
             });
@@ -89,6 +97,10 @@ public class HomeActivity extends AppCompatActivity {
         setupRecyclerViews();
         setupApiService();
         setupLocationClient();
+
+        // Khởi tạo LoadingDialog
+        loadingDialog = new LoadingDialog(this);
+
         requestLocationAndLoadData();
     }
 
@@ -151,6 +163,8 @@ public class HomeActivity extends AppCompatActivity {
     private void requestLocationAndLoadData() {
         if (checkLocationPermission()) {
             Log.d(TAG, "Permission already granted");
+            // Hiển thị loading ngay khi bắt đầu
+            showLoadingDialog("Đang lấy vị trí của bạn...");
             getCurrentLocationAndLoad();
         } else {
             Log.d(TAG, "Requesting permission");
@@ -176,12 +190,15 @@ public class HomeActivity extends AppCompatActivity {
         if (!checkLocationPermission()) {
             currentLat = DEFAULT_LAT;
             currentLng = DEFAULT_LNG;
+            // Cập nhật message của loading dialog
+            updateLoadingMessage("Đang tải dữ liệu...");
             loadHomeData();
             return;
         }
 
         try {
-            showLoading();
+            // Loading dialog đã được show từ trước, chỉ cần update message
+            updateLoadingMessage("Đang xác định vị trí...");
 
             fusedLocationClient.getCurrentLocation(
                     Priority.PRIORITY_HIGH_ACCURACY,
@@ -191,20 +208,27 @@ public class HomeActivity extends AppCompatActivity {
                     currentLat = location.getLatitude();
                     currentLng = location.getLongitude();
                     Log.d(TAG, "GPS Location: " + currentLat + ", " + currentLng);
-                    Toast.makeText(this, "Đã lấy vị trí của bạn", Toast.LENGTH_SHORT).show();
+
+                    // Cập nhật message khi đã lấy được vị trí
+                    updateLoadingMessage("Đang tải dữ liệu gần bạn...");
                 } else {
                     Log.w(TAG, "Location is null, using default");
                     currentLat = DEFAULT_LAT;
                     currentLng = DEFAULT_LNG;
-                    Toast.makeText(this, "Sử dụng vị trí mặc định (Hà Nội)", Toast.LENGTH_SHORT).show();
+
+                    // Cập nhật message khi dùng vị trí mặc định
+                    updateLoadingMessage("Đang tải dữ liệu...");
                 }
+                // Tiếp tục load data, loading dialog vẫn hiển thị
                 loadHomeData();
 
             }).addOnFailureListener(this, e -> {
                 Log.e(TAG, "Failed to get location: " + e.getMessage(), e);
-                Toast.makeText(this, "Không thể lấy vị trí. Sử dụng vị trí mặc định", Toast.LENGTH_SHORT).show();
                 currentLat = DEFAULT_LAT;
                 currentLng = DEFAULT_LNG;
+
+                // Cập nhật message khi lỗi
+                updateLoadingMessage("Đang tải dữ liệu...");
                 loadHomeData();
             });
 
@@ -212,19 +236,21 @@ public class HomeActivity extends AppCompatActivity {
             Log.e(TAG, "Security exception: " + e.getMessage(), e);
             currentLat = DEFAULT_LAT;
             currentLng = DEFAULT_LNG;
+            updateLoadingMessage("Đang tải dữ liệu...");
             loadHomeData();
         }
     }
 
     private void loadHomeData() {
-        showLoading();
+        // Không cần showLoading() nữa vì đã có LoadingDialog
         Log.d(TAG, "Loading home data with location: " + currentLat + ", " + currentLng);
 
         apiService.getHomePageData(currentLat, currentLng)
                 .enqueue(new Callback<HomeResponse>() {
                     @Override
                     public void onResponse(Call<HomeResponse> call, Response<HomeResponse> response) {
-                        hideLoading();
+                        // Ẩn loading dialog khi có response
+                        hideLoadingDialog();
 
                         if (response.isSuccessful() && response.body() != null) {
                             HomeResponse homeResponse = response.body();
@@ -239,6 +265,9 @@ public class HomeActivity extends AppCompatActivity {
                                     facilityAdapter.setFacilityList(homeResponse.getData().getFeaturedFacilities());
                                     Log.d(TAG, "Loaded " + homeResponse.getData().getFeaturedFacilities().size() + " facilities");
                                 }
+
+                                // Hiển thị thông báo thành công
+                                Toast.makeText(HomeActivity.this, "Đã tải xong!", Toast.LENGTH_SHORT).show();
                             } else {
                                 showError("Lỗi: " + homeResponse.getMessage());
                             }
@@ -250,11 +279,47 @@ public class HomeActivity extends AppCompatActivity {
 
                     @Override
                     public void onFailure(Call<HomeResponse> call, Throwable t) {
-                        hideLoading();
+                        // Ẩn loading dialog khi có lỗi
+                        hideLoadingDialog();
                         showError("Lỗi kết nối: " + t.getMessage());
                         Log.e(TAG, "API call failed", t);
                     }
                 });
+    }
+
+    // Phương thức hiển thị LoadingDialog với message tùy chỉnh
+    private void showLoadingDialog(String message) {
+        if (loadingDialog != null) {
+            try {
+                loadingDialog.show();
+                // Nếu LoadingDialog của bạn có phương thức setMessage, sử dụng nó
+                // loadingDialog.setMessage(message);
+                Log.d(TAG, "Loading: " + message);
+            } catch (Exception e) {
+                Log.e(TAG, "Error showing loading dialog", e);
+            }
+        }
+    }
+
+    // Phương thức cập nhật message của LoadingDialog
+    private void updateLoadingMessage(String message) {
+        // Nếu LoadingDialog của bạn có phương thức setMessage, sử dụng nó
+        // if (loadingDialog != null) {
+        //     loadingDialog.setMessage(message);
+        // }
+        Log.d(TAG, "Loading: " + message);
+    }
+
+    // Phương thức ẩn LoadingDialog
+    private void hideLoadingDialog() {
+        if (loadingDialog != null) {
+            try {
+                loadingDialog.dismiss();
+                Log.d(TAG, "Loading dismissed");
+            } catch (Exception e) {
+                Log.e(TAG, "Error dismissing loading dialog", e);
+            }
+        }
     }
 
     private void openUrl(String url) {
@@ -301,6 +366,14 @@ public class HomeActivity extends AppCompatActivity {
         super.onDestroy();
         if (cancellationTokenSource != null) {
             cancellationTokenSource.cancel();
+        }
+        // Đảm bảo dismiss loading dialog khi destroy activity
+        if (loadingDialog != null) {
+            try {
+                loadingDialog.dismiss();
+            } catch (Exception e) {
+                Log.e(TAG, "Error dismissing dialog in onDestroy", e);
+            }
         }
     }
 }
