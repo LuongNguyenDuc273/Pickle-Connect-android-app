@@ -5,6 +5,7 @@ import com.datn06.pickleconnect.Login.LoginRequest;
 import com.datn06.pickleconnect.Login.LoginResponse;
 import com.datn06.pickleconnect.Register.RegisterRequest;
 import com.datn06.pickleconnect.Register.RegisterResponse;
+import com.datn06.pickleconnect.Search.SearchResponse;
 
 import retrofit2.Call;
 import retrofit2.http.*;
@@ -28,5 +29,14 @@ public interface ApiService {
     Call<HomeResponse> getHomePageData(
             @Query("userLat") Double userLat,
             @Query("userLng") Double userLng
+    );
+
+    @GET("api-andr/home/facilities/search")
+    Call<SearchResponse> searchFacilities(
+            @Query("keyword") String keyword,
+            @Query("userLat") Double userLat,
+            @Query("userLng") Double userLng,
+            @Query("maxDistanceKm") Double maxDistanceKm,
+            @Query("limit") Integer limit
     );
 }
