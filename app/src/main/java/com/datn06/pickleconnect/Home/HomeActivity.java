@@ -475,6 +475,7 @@ public class HomeActivity extends AppCompatActivity {
                     currentLng = DEFAULT_LNG;
                     updateLoadingMessage("Đang tải dữ liệu...");
                 }
+                // Tiếp tục load data, loading dialog vẫn hiển thị
                 loadHomeData();
 
             }).addOnFailureListener(this, e -> {
