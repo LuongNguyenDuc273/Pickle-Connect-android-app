@@ -12,6 +12,7 @@ public class LoginResponse {
         private String userName;
         private String fullName;
         private String email;
+        private String phoneNumber;  // Added phone number field
 
         public String getToken() { return token; }
         public void setToken(String token) { this.token = token; }
@@ -30,6 +31,9 @@ public class LoginResponse {
 
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
+        
+        public String getPhoneNumber() { return phoneNumber; }
+        public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
     }
 
     public String getCode() { return code; }

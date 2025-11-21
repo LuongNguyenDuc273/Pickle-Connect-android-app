@@ -16,9 +16,9 @@
         <ImageView
             android:id="@+id/ivLogo"
             android:layout_width="120dp"
-            android:layout_height="80dp"
+            android:layout_height="120dp"
             android:layout_marginTop="40dp"
-            android:src="@drawable/logo_atp"
+            android:src="@drawable/bag_racket"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -240,33 +240,19 @@
                 android:textSize="14sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Label Mật khẩu -->
         <TextView
-            android:id="@+id/tvPasswordLabel"
+            android:id="@+id/tvDateLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Mật khẩu"
+            android:text="Ngày sinh"
             android:textColor="#000000"
             android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tilFullName" />
+            app:layout_constraintTop_toBottomOf="@+id/tilFullName" />
 
-        <TextView
-            android:id="@+id/tvPasswordRequired"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:text="*"
-            android:textColor="#FF0000"
-            android:textSize="14sp"
-            app:layout_constraintBottom_toBottomOf="@id/tvPasswordLabel"
-            app:layout_constraintStart_toEndOf="@id/tvPasswordLabel"
-            app:layout_constraintTop_toTopOf="@id/tvPasswordLabel" />
-
-        <!-- Input Mật khẩu -->
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilPassword"
+            android:id="@+id/tilDob"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -276,73 +262,87 @@
             app:boxCornerRadiusTopEnd="8dp"
             app:boxCornerRadiusTopStart="8dp"
             app:boxStrokeColor="#CCCCCC"
-            app:endIconMode="password_toggle"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvPasswordLabel">
+            app:endIconTint="?attr/colorPrimary"
+            app:layout_constraintTop_toBottomOf="@+id/tvDateLabel">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPassword"
+                android:id="@+id/etDob"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Nhập mật khẩu"
-                android:inputType="textPassword"
-                android:padding="16dp"
+                android:hint="dd/mm/yyyy"
+                android:focusable="false"
+                android:clickable="true"
+                android:paddingStart="14dp"
+                android:drawableEnd="@drawable/ic_calendar"
+                android:paddingEnd="14dp"
                 android:textColor="#000000"
                 android:textSize="14sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Label Xác nhận mật khẩu -->
         <TextView
-            android:id="@+id/tvConfirmPasswordLabel"
+            android:id="@+id/tvGenderLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Xác nhận mật khẩu"
+            android:text="Giới tính"
             android:textColor="#000000"
             android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tilPassword" />
+            app:layout_constraintTop_toBottomOf="@+id/tilDob" />
 
-        <TextView
-            android:id="@+id/tvConfirmPasswordRequired"
+        <RadioGroup
+            android:id="@+id/rgGender"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:text="*"
-            android:textColor="#FF0000"
-            android:textSize="14sp"
-            app:layout_constraintBottom_toBottomOf="@id/tvConfirmPasswordLabel"
-            app:layout_constraintStart_toEndOf="@id/tvConfirmPasswordLabel"
-            app:layout_constraintTop_toTopOf="@id/tvConfirmPasswordLabel" />
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvGenderLabel">
 
-        <!-- Input Xác nhận mật khẩu -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilConfirmPassword"
+            <RadioButton
+                android:id="@+id/rbMale"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nam"
+                android:buttonTint="#666666" />
+
+            <RadioButton
+                android:id="@+id/rbFemale"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:text="Nữ"
+                android:buttonTint="#666666" />
+        </RadioGroup>
+
+        <!-- Checkbox đồng ý điều khoản -->
+        <LinearLayout
+            android:id="@+id/llTerms"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:boxBackgroundMode="outline"
-            app:boxCornerRadiusBottomEnd="8dp"
-            app:boxCornerRadiusBottomStart="8dp"
-            app:boxCornerRadiusTopEnd="8dp"
-            app:boxCornerRadiusTopStart="8dp"
-            app:boxStrokeColor="#CCCCCC"
-            app:endIconMode="password_toggle"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvConfirmPasswordLabel">
+            app:layout_constraintTop_toBottomOf="@+id/rgGender">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etConfirmPassword"
-                android:layout_width="match_parent"
+            <CheckBox
+                android:id="@+id/cbTerms"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:hint="Nhập lại mật khẩu"
-                android:inputType="textPassword"
-                android:padding="16dp"
-                android:textColor="#000000"
-                android:textSize="14sp" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:buttonTint="#00BFA5" />
+
+            <TextView
+                android:id="@+id/tvTerms"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_gravity="center_vertical"
+                android:textColor="#666666"
+                android:textSize="13sp" />
+        </LinearLayout>
 
         <!-- ProgressBar -->
         <ProgressBar
@@ -355,23 +355,23 @@
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tilConfirmPassword" />
+            app:layout_constraintTop_toBottomOf="@+id/llTerms" />
 
-        <!-- Nút Đăng ký -->
+        <!-- Nút Tiếp tục -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnRegister"
             android:layout_width="0dp"
             android:layout_height="56dp"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="24dp"
             android:backgroundTint="#00BFA5"
-            android:text="ĐĂNG KÝ"
+            android:text="TIẾP TỤC"
             android:textColor="@android:color/white"
             android:textSize="16sp"
             android:textStyle="bold"
             app:cornerRadius="28dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tilConfirmPassword" />
+            app:layout_constraintTop_toBottomOf="@+id/llTerms" />
 
         <!-- Spacer để đẩy phần đăng nhập xuống cuối -->
         <View

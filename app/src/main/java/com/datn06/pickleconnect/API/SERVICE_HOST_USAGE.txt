@@ -1,0 +1,32 @@
+// SERVICE HOST USAGE GUIDE
+// ========================
+
+// 1. AUTH SERVICE - Registration, Login, Reset Password
+// Port: 9005, Base URL: /auth
+AuthApiService authService = ApiClient.createService(ServiceHost.AUTH_SERVICE, AuthApiService.class);
+authService.register(request).enqueue(...);
+authService.login(loginRequest).enqueue(...);
+
+// 2. COURT SERVICE - Booking, Court Management  
+// Port: 9008, Base URL: /api/v1
+// (Create CourtApiService.java later)
+// CourtApiService courtService = ApiClient.createService(ServiceHost.COURT_SERVICE, CourtApiService.class);
+// courtService.searchCourts(request).enqueue(...);
+// courtService.bookCourt(request).enqueue(...);
+
+// 3. MAIN API SERVICE - Home, General Data
+// Port: 9003
+ApiService mainService = ApiClient.createService(ServiceHost.API_SERVICE, ApiService.class);
+mainService.getHomePageData(lat, lng).enqueue(...);
+
+// 4. PAYMENT SERVICE (if available)
+// Port: 9010
+// PaymentApiService paymentService = ApiClient.createService(ServiceHost.PAYMENT_SERVICE, PaymentApiService.class);
+// paymentService.processPayment(request).enqueue(...);
+
+// BENEFITS:
+// ✅ Clear separation of services by domain
+// ✅ Easy to switch between services
+// ✅ Type-safe API calls
+// ✅ Better code organization
+// ✅ Easy to add new services - just add to ServiceHost enum

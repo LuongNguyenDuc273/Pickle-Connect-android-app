@@ -1,0 +1,24 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="40dp"
+    android:viewportWidth="40"
+    android:viewportHeight="40">
+    
+    <!-- Background -->
+    <path
+        android:fillColor="#0F4EAD"
+        android:pathData="M4,4h32v32H4z"/>
+    
+    <!-- VNPay Logo Text -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M10,14l2,8l2,-8h2l-3,12h-2l-3,-12h2z"/>
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M18,14h2l4,8v-8h2v12h-2l-4,-8v8h-2v-12z"/>
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M27,14h4c2,0 3,1 3,3c0,2 -1,3 -3,3h-2v4h-2v-10zM29,18h2c1,0 1.5,-0.5 1.5,-1.5c0,-1 -0.5,-1.5 -1.5,-1.5h-2v3z"/>
+</vector>

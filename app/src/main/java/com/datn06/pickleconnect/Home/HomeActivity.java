@@ -21,6 +21,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.API.ApiService;
+import com.datn06.pickleconnect.API.AuthApiService;
+import com.datn06.pickleconnect.API.ServiceHost;
 import com.datn06.pickleconnect.R;
 import com.datn06.pickleconnect.Adapter.BannerAdapter;
 import com.datn06.pickleconnect.Adapter.FacilityAdapter;
@@ -93,6 +95,9 @@ public class HomeActivity extends AppCompatActivity {
             return insets;
         });
 
+        // ✅ ADDED: Initialize ApiClient with context to load saved token
+        ApiClient.init(this);
+
         initViews();
         setupRecyclerViews();
         setupApiService();
@@ -146,7 +151,8 @@ public class HomeActivity extends AppCompatActivity {
 
             @Override
             public void onBookClick(FacilityDTO facility) {
-                bookFacility(facility);
+                // Navigation đã được xử lý trong FacilityAdapter
+                // Callback này chỉ để log hoặc analytics nếu cần
             }
         });
     }
@@ -244,8 +250,8 @@ public class HomeActivity extends AppCompatActivity {
     private void loadHomeData() {
         // Không cần showLoading() nữa vì đã có LoadingDialog
         Log.d(TAG, "Loading home data with location: " + currentLat + ", " + currentLng);
-
-        apiService.getHomePageData(currentLat, currentLng)
+        ApiService authService = ApiClient.createService(ServiceHost.API_SERVICE, ApiService.class);
+        authService.getHomePageData(currentLat, currentLng)
                 .enqueue(new Callback<HomeResponse>() {
                     @Override
                     public void onResponse(Call<HomeResponse> call, Response<HomeResponse> response) {
@@ -334,10 +340,6 @@ public class HomeActivity extends AppCompatActivity {
 
     private void openFacilityDetail(FacilityDTO facility) {
         Toast.makeText(this, "Xem chi tiết: " + facility.getFacilityName(), Toast.LENGTH_SHORT).show();
-    }
-
-    private void bookFacility(FacilityDTO facility) {
-        Toast.makeText(this, "Đặt sân: " + facility.getFacilityName(), Toast.LENGTH_SHORT).show();
     }
 
     private void openMapActivity() {
