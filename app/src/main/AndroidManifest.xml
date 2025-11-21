@@ -18,6 +18,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PickleConnect">
         <activity
+            android:name=".Event.EventDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Event.EventsActivity"
+            android:exported="false" />
+        <activity
             android:name=".Facility.FacilityDetailActivity"
             android:exported="false" />
         <activity

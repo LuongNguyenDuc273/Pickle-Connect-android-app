@@ -64,7 +64,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:layout_marginStart="12dp"
-                        android:hint="An"
+                        android:hint="Tìm kiếm sân"
                         android:textSize="16sp"
                         android:textColor="#000000"
                         android:textColorHint="#9E9E9E"
@@ -101,6 +101,25 @@
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
     </LinearLayout>
+
+    <!-- Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        android:paddingTop="8dp"
+        android:paddingBottom="0dp"
+        app:itemIconTint="@color/bottom_nav_color"
+        app:itemTextColor="@color/bottom_nav_color"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_nav_menu"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:elevation="8dp"
+        app:itemActiveIndicatorStyle="@null"/>
+
 
 
 

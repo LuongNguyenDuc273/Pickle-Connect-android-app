@@ -11,6 +11,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -26,6 +27,7 @@ import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.API.ApiService;
+import com.datn06.pickleconnect.Event.EventsActivity;
 import com.datn06.pickleconnect.R;
 import com.datn06.pickleconnect.Adapter.BannerAdapter;
 import com.datn06.pickleconnect.Adapter.FacilityAdapter;
@@ -102,13 +104,19 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+
+        // BỎ EdgeToEdge.enable(this); - Đây là nguyên nhân gây khoảng trống
+
         setContentView(R.layout.activity_home);
+
+        // SỬA LẠI: Chỉ apply window insets cho main layout, KHÔNG cho bottomNav
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            // Chỉ set padding cho top, KHÔNG set cho bottom
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
             return insets;
         });
+
 
         initViews();
         setupSearchListeners();
@@ -117,7 +125,6 @@ public class HomeActivity extends AppCompatActivity {
         setupLocationClient();
         setupBottomNavigation();
         dotsContainer = findViewById(R.id.dotsContainer);
-
 
         loadingDialog = new LoadingDialog(this);
         menuNavigation = new MenuNavigation(this);
@@ -584,7 +591,12 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void openFacilityDetail(FacilityDTO facility) {
-        Toast.makeText(this, "Xem chi tiết: " + facility.getFacilityName(), Toast.LENGTH_SHORT).show();
+        // Chuyển sang EventsActivity và truyền facilityId
+        Intent intent = new Intent(HomeActivity.this, EventsActivity.class);
+        intent.putExtra("facilityId", facility.getFacilityId());
+        intent.putExtra("facilityName", facility.getFacilityName());
+        startActivity(intent);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private void bookFacility(FacilityDTO facility) {
