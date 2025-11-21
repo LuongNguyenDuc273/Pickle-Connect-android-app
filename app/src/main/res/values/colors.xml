@@ -16,9 +16,12 @@
     
     <!-- Background Colors -->
     <color name="background_light">#F5F5F5</color>
+    <color name="background">#F5F5F5</color>
+    <color name="primary_light">#E0F2F1</color>
     
     <!-- Border Colors -->
     <color name="border_light">#E0E0E0</color> <!-- Light border for input fields -->
+    <color name="border_color">#E0E0E0</color> <!-- Border color for inputs -->
     
     <!-- Error Colors -->
     <color name="error_red">#F44336</color>
