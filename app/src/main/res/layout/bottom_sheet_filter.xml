@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bộ lọc"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Chọn 1 trong 2: Khu vực HOẶC Khoảng cách -->
+        <RadioGroup
+            android:id="@+id/radioGroupFilterMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp">
+
+            <!-- Option 1: Khu vực -->
+            <RadioButton
+                android:id="@+id/radioKhuVuc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Khu vực"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:checked="true"
+                android:paddingVertical="8dp" />
+
+            <!-- Option 2: Khoảng cách -->
+            <RadioButton
+                android:id="@+id/radioKhoangCach"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Khoảng cách"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:paddingVertical="8dp" />
+        </RadioGroup>
+
+        <!-- Container cho chế độ Khu vực -->
+        <LinearLayout
+            android:id="@+id/containerKhuVuc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <!-- Chọn Tỉnh/TP -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+:text="Tỉnh/TP"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:id="@+id/layoutSelectCity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@drawable/bg_input_field"
+                android:padding="12dp"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:id="@+id/tvSelectedCity"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Chọn Tỉnh/TP"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_hint" />
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_arrow_down"
+                    android:contentDescription="Dropdown" />
+            </LinearLayout>
+
+            <!-- Chọn Quận/Huyện -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quận/Huyện"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:id="@+id/layoutSelectDistrict"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@drawable/bg_input_field"
+                android:padding="12dp"
+                android:gravity="center_vertical"
+                android:enabled="false"
+                android:alpha="0.5">
+
+                <TextView
+                    android:id="@+id/tvSelectedDistrict"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Chọn Quận/Huyện"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_hint" />
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_arrow_down"
+                    android:contentDescription="Dropdown" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Container cho chế độ Khoảng cách -->
+        <LinearLayout
+            android:id="@+id/containerKhoangCach"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <!-- Hiển thị vị trí hiện tại -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_location"
+                    android:layout_marginEnd="8dp"
+                    android:contentDescription="Location" />
+
+                <TextView
+                    android:id="@+id/tvCurrentLocation"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Q. Đống Đa, Thành Phố Hà Nội"
+                    android:textSize="14sp"
+                    android:textColor="@color/black" />
+            </LinearLayout>
+
+            <!-- SeekBar khoảng cách -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1 km"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="20 km"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary" />
+            </LinearLayout>
+
+            <SeekBar
+                android:id="@+id/seekBarDistance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:min="1"
+                android:max="20"
+                android:progress="10"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/tvDistanceValue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Khoảng cách (10 km)"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <!-- Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="24dp"
+            android:gravity="center">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancel"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="XÓA"
+                android:textColor="@color/text_secondary"
+                android:backgroundTint="@color/white"
+                style="?attr/materialButtonOutlinedStyle"
+                app:strokeColor="@color/border_color"
+                app:strokeWidth="1dp"
+                app:cornerRadius="8dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnApply"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="OK"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/primary"
+                app:cornerRadius="8dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
