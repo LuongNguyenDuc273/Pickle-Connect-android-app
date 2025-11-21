@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.chip.Chip xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/chipField"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    android:text="Sân 1"
+    android:textColor="@android:color/black"
+    android:textSize="14sp"
+    app:chipBackgroundColor="@android:color/white"
+    app:chipStrokeColor="#00BCD4"
+    app:chipStrokeWidth="1dp"
+    app:chipCornerRadius="20dp"
+    app:ensureMinTouchTargetSize="true"
+    style="@style/Widget.MaterialComponents.Chip.Choice" />

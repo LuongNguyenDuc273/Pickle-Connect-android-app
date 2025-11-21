@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background_light"
+    android:fitsSystemWindows="true">
+
+    <!-- Toolbar -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/white"
+        android:elevation="4dp"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:titleTextColor="@color/text_primary" />
+
+    <!-- Content ScrollView -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center_horizontal">
+
+            <!-- Pickle Connect Logo/Icon -->
+            <ImageView
+                android:id="@+id/ivLogo"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_marginTop="32dp"
+                android:src="@drawable/otp"
+                android:contentDescription="Pickle Connect Logo" />
+
+            <!-- Title -->
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="NHẬP MÃ OTP"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:fontFamily="sans-serif-medium" />
+
+            <!-- Description -->
+            <TextView
+                android:id="@+id/tvDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Vui lòng nhập mã OTP được gửi đến địa chỉ email"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.2" />
+
+            <!-- Email Display -->
+            <TextView
+                android:id="@+id/tvEmail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="jo***@example.com"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_green" />
+
+            <!-- OTP Input Container -->
+            <LinearLayout
+                android:id="@+id/llOtpContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <!-- OTP Digit 1 -->
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etOtp1"
+                    android:layout_width="48dp"
+                    android:layout_height="56dp"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_otp_input"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_green" />
+
+                <!-- OTP Digit 2 -->
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etOtp2"
+                    android:layout_width="48dp"
+                    android:layout_height="56dp"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_otp_input"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_green" />
+
+                <!-- OTP Digit 3 -->
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etOtp3"
+                    android:layout_width="48dp"
+                    android:layout_height="56dp"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_otp_input"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_green" />
+
+                <!-- OTP Digit 4 -->
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etOtp4"
+                    android:layout_width="48dp"
+                    android:layout_height="56dp"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_otp_input"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_green" />
+
+                <!-- OTP Digit 5 -->
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etOtp5"
+                    android:layout_width="48dp"
+                    android:layout_height="56dp"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_otp_input"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_green" />
+
+                <!-- OTP Digit 6 -->
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etOtp6"
+                    android:layout_width="48dp"
+                    android:layout_height="56dp"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_otp_input"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_green" />
+
+            </LinearLayout>
+
+            <!-- Timer & Resend Container -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Clock Icon -->
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_timer"
+                    android:tint="@color/primary_green"
+                    android:contentDescription="Timer" />
+
+                <!-- Timer Text -->
+                <TextView
+                    android:id="@+id/tvTimer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Gửi lại mã OTP sau: 30s"
+                    android:textSize="14sp"
+                    android:textColor="@color/primary_green"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <!-- Resend OTP Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnResendOtp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="GỬI LẠI MÃ OTP"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:enabled="false"
+                style="@style/Widget.Material3.Button.TextButton"
+                app:strokeColor="@color/primary_green"
+                app:strokeWidth="1dp"
+                android:textColor="@color/primary_green" />
+
+            <!-- Verify Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnVerify"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="32dp"
+                android:text="XÁC NHẬN"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:backgroundTint="@color/primary_green"
+                android:textColor="@color/white"
+                app:cornerRadius="8dp"
+                android:elevation="2dp" />
+
+            <!-- Helper Text -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Không nhận được mã?"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary" />
+
+            <TextView
+                android:id="@+id/tvCheckSpam"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Kiểm tra hộp thư Spam hoặc liên hệ hỗ trợ"
+                android:textSize="12sp"
+                android:textColor="@color/text_hint"
+                android:gravity="center" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Loading Progress Bar (Initially Hidden) -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+</LinearLayout>

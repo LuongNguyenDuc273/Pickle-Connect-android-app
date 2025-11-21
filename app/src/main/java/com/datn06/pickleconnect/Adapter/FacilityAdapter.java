@@ -1,6 +1,7 @@
 package com.datn06.pickleconnect.Adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
+import com.datn06.pickleconnect.Booking.FieldSelectionActivity;
 import com.datn06.pickleconnect.R;
 import com.datn06.pickleconnect.Model.FacilityDTO;
 import java.util.ArrayList;
@@ -77,6 +79,14 @@ public class FacilityAdapter extends RecyclerView.Adapter<FacilityAdapter.Facili
         });
 
         holder.btnBookVenue.setOnClickListener(v -> {
+            // Navigate to FieldSelectionActivity with facilityId
+            Intent intent = new Intent(context, FieldSelectionActivity.class);
+            intent.putExtra("facilityId", facility.getFacilityId());
+            intent.putExtra("facilityName", facility.getFacilityName());
+            // bookDate sẽ được lấy là ngày hiện tại trong FieldSelectionActivity
+            context.startActivity(intent);
+            
+            // Gọi callback nếu có (để HomeActivity biết)
             if (listener != null) {
                 listener.onBookClick(facility);
             }

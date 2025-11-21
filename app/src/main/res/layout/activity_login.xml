@@ -183,6 +183,22 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tilPassword" />
 
+        <!-- Forgot Password Link -->
+        <TextView
+            android:id="@+id/tvForgotPassword"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Quên mật khẩu?"
+            android:textColor="#00BFA5"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btnLogin" />
+
         <!-- Spacer để đẩy phần đăng ký xuống cuối -->
         <View
             android:id="@+id/spacer"
@@ -190,7 +206,7 @@
             android:layout_height="60dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnLogin" />
+            app:layout_constraintTop_toBottomOf="@id/tvForgotPassword" />
 
         <!-- Section Đăng ký - Nằm ngang, dễ nhìn -->
         <LinearLayout
