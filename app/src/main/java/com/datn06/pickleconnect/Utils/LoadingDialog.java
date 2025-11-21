@@ -9,24 +9,54 @@ import com.datn06.pickleconnect.R;
 
 public class LoadingDialog {
     private Dialog dialog;
+    private Context context;
 
     public LoadingDialog(Context context) {
+        this.context = context;
+        initDialog();
+    }
+    
+    private void initDialog() {
+        if (context == null) return;
+        
         dialog = new Dialog(context);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.loading_dialog);
         dialog.setCancelable(false);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
     }
 
     public void show() {
         if (dialog != null && !dialog.isShowing()) {
-            dialog.show();
+            try {
+                dialog.show();
+            } catch (Exception e) {
+                // Catch WindowManager$BadTokenException if activity is finishing
+                e.printStackTrace();
+            }
         }
     }
 
     public void dismiss() {
         if (dialog != null && dialog.isShowing()) {
-            dialog.dismiss();
+            try {
+                dialog.dismiss();
+            } catch (Exception e) {
+                // Catch IllegalArgumentException if already dismissed
+                e.printStackTrace();
+            }
         }
+    }
+    
+    /**
+     * Cleanup dialog resources
+     */
+    public void destroy() {
+        dismiss();
+        dialog = null;
+        context = null;
     }
 }

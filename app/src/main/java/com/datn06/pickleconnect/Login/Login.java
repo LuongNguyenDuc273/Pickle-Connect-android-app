@@ -7,11 +7,15 @@ import android.view.View;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.datn06.pickleconnect.API.ApiClient;
+import com.datn06.pickleconnect.API.AuthApiService;
+import com.datn06.pickleconnect.API.ServiceHost;
 import com.datn06.pickleconnect.Home.HomeActivity;
 import com.datn06.pickleconnect.R;
 import com.datn06.pickleconnect.Register.RegisterActivity;
+import com.datn06.pickleconnect.Register.RegisterResponse;
 import com.datn06.pickleconnect.Utils.AlertHelper;
 import com.datn06.pickleconnect.Utils.LoadingDialog;
+import com.datn06.pickleconnect.Utils.SharedPrefManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import retrofit2.Call;
@@ -22,7 +26,7 @@ public class Login extends AppCompatActivity {
 
     private TextInputEditText etUsername, etPassword;
     private MaterialButton btnLogin;
-    private TextView tvRegisterNow;
+    private TextView tvRegisterNow, tvForgotPassword;
     private LoadingDialog loadingDialog;
 
     @Override
@@ -34,10 +38,16 @@ public class Login extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
         tvRegisterNow = findViewById(R.id.tvRegisterNow);
+        tvForgotPassword = findViewById(R.id.tvForgotPassword);
 
         loadingDialog = new LoadingDialog(this);
 
         btnLogin.setOnClickListener(v -> handleLogin());
+
+        tvForgotPassword.setOnClickListener(v -> {
+            Intent intent = new Intent(Login.this, com.datn06.pickleconnect.ForgotPasswordActivity.class);
+            startActivity(intent);
+        });
 
         tvRegisterNow.setOnClickListener(v -> {
             Intent intent = new Intent(Login.this, RegisterActivity.class);
@@ -65,7 +75,8 @@ public class Login extends AppCompatActivity {
 
         LoginRequest request = new LoginRequest(username, password);
 
-        ApiClient.getApiService().login(request).enqueue(new Callback<LoginResponse>() {
+        AuthApiService authService = ApiClient.createService(ServiceHost.API_SERVICE, AuthApiService.class);
+        authService.login(request).enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                 showLoading(false);
@@ -79,7 +90,22 @@ public class Login extends AppCompatActivity {
                         String refreshToken = data.getRefreshToken();
                         Long accountId = data.getAccountId();
                         String fullName = data.getFullName();
+                        String userName = data.getUserName();
+                        String userEmail = data.getEmail();
+                        String phoneNumber = data.getPhoneNumber();
 
+                        // ✅ UPDATED: Save to SharedPrefManager
+                        SharedPrefManager prefManager = SharedPrefManager.getInstance(Login.this);
+                        prefManager.saveUser(
+                            String.valueOf(accountId), // userId = accountId
+                            userName,                   // username
+                            userEmail,                  // email
+                            phoneNumber,                // phone
+                            fullName                    // fullName
+                        );
+                        prefManager.saveTokens(token, refreshToken);
+
+                        // Also save to "MyApp" SharedPreferences for backward compatibility
                         SharedPreferences prefs = getSharedPreferences("MyApp", MODE_PRIVATE);
                         prefs.edit()
                                 .putString("token", token)

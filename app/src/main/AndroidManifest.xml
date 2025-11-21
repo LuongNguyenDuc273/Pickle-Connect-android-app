@@ -43,9 +43,54 @@
         <activity
             android:name=".Home.HomeActivity"
             android:exported="false" />
+<!--        <activity-->
+<!--            android:name=".Login.Login"-->
+<!--            android:exported="false"/>-->
         <activity
             android:name=".Register.RegisterActivity"
             android:exported="false" />
+        <activity
+            android:name=".Booking.FieldSelectionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Booking.BookingConfirmActivity"
+            android:exported="false"
+            android:label="Xác nhận đặt sân"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".PaymentResultActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:label="Kết quả thanh toán">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                
+                <data
+                    android:scheme="pickleconnect"
+                    android:host="payment" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".Policy.PolicyActivity"
+            android:exported="false"
+            android:label="Chính sách bảo mật" />
+        <activity
+            android:name=".OtpVerificationActivity"
+            android:exported="false"
+            android:label="Xác thực OTP"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".SetPasswordActivity"
+            android:exported="false"
+            android:label="Đặt mật khẩu"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ForgotPasswordActivity"
+            android:exported="false"
+            android:label="Quên mật khẩu"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".Login.Login"
             android:exported="true">
