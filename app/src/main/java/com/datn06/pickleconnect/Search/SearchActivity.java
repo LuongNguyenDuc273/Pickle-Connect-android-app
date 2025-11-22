@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.API.ApiService;
+import com.datn06.pickleconnect.API.ServiceHost;
 import com.datn06.pickleconnect.Model.FacilityDTO;
 import com.datn06.pickleconnect.R;
 
@@ -94,7 +95,9 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void initApiService() {
-        apiService = ApiClient.getApiService();
+        // ✅ FIXED: Use API_SERVICE (port 9003) for search
+        apiService = ApiClient.createService(ServiceHost.API_SERVICE, ApiService.class);
+        Log.d(TAG, "API Service initialized for port 9003 (Search)");
     }
 
     private void setupRecyclerView() {

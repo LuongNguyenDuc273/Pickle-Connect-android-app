@@ -1,5 +1,7 @@
 package com.datn06.pickleconnect.API;
 
+import com.datn06.pickleconnect.Event.EventDetailResponse;
+import com.datn06.pickleconnect.Event.EventResponse;
 import com.datn06.pickleconnect.Home.HomeResponse;
 import com.datn06.pickleconnect.Login.LoginRequest;
 import com.datn06.pickleconnect.Login.LoginResponse;
@@ -50,5 +52,19 @@ public interface ApiService {
             @Query("userLng") Double userLng,
             @Query("maxDistanceKm") Double maxDistanceKm,
             @Query("limit") Integer limit
+    );
+
+    // Get Event List
+    @GET("api-andr/events/list")
+    Call<EventResponse> getEventList(
+            @Query("facilityId") String facilityId,
+            @Query("startDate") String startDate,
+            @Query("endDate") String endDate
+    );
+
+    // Get Event Detail
+    @GET("api-andr/events/{eventId}")
+    Call<EventDetailResponse> getEventDetail(
+            @Path("eventId") String eventId
     );
 }
