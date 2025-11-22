@@ -28,6 +28,7 @@
             android:exported="false" />
         <activity
             android:name=".Search.SearchedActivity"
+            android:launchMode="singleTask"
             android:exported="false" />
         <activity
             android:name=".Search.SearchActivity"
@@ -42,6 +43,7 @@
             android:exported="false" />
         <activity
             android:name=".Home.HomeActivity"
+            android:launchMode="singleTask"
             android:exported="false" />
 <!--        <activity-->
 <!--            android:name=".Login.Login"-->

@@ -18,6 +18,7 @@ import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.API.CourtApiService;
 import com.datn06.pickleconnect.API.ServiceHost;
 import com.datn06.pickleconnect.Common.BaseResponse;
+import com.datn06.pickleconnect.Event.EventsActivity;
 import com.datn06.pickleconnect.Model.FieldAvailabilityDTO;
 import com.datn06.pickleconnect.Model.FieldBookingResponse;
 import com.datn06.pickleconnect.Model.SelectedSlotDTO;
@@ -122,35 +123,41 @@ public class FieldSelectionActivity extends AppCompatActivity {
         
         rvTimeSlots.setLayoutManager(new LinearLayoutManager(this));
     }
-    
+
     private void setupListeners() {
         // Back button
         btnBack.setOnClickListener(v -> finish());
-        
+
         // Date navigation
         btnPrevDate.setOnClickListener(v -> navigateDate(-1));
         btnNextDate.setOnClickListener(v -> navigateDate(1));
-        
+
         // Date picker
         tvSelectedDate.setOnClickListener(v -> showDatePicker());
-        
+
         // Continue button
         btnContinue.setOnClickListener(v -> onContinueClicked());
-        
+
         // Tab layout (Dịch kèo sẵn / Đặt kèo tự tạo)
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                // Handle tab change if needed
+                // Tab 0 = Dịch kèo sẵn (hiện tại)
+                // Tab 1 = Đặt kèo tự tạo (chuyển sang EventsActivity)
                 if (tab.getPosition() == 1) {
-                    Toast.makeText(FieldSelectionActivity.this, 
-                        "Chức năng đang phát triển", Toast.LENGTH_SHORT).show();
+                    // Chuyển sang EventsActivity
+                    Intent intent = new Intent(FieldSelectionActivity.this, EventsActivity.class);
+                    intent.putExtra("facilityId", facilityId);
+                    intent.putExtra("facilityName", facilityName);
+                    startActivity(intent);
+                    // Đóng Activity hiện tại để tránh stack quá nhiều
+                    finish();
                 }
             }
-            
+
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {}
-            
+
             @Override
             public void onTabReselected(TabLayout.Tab tab) {}
         });

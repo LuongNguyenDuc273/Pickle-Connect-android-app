@@ -27,6 +27,8 @@ import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.API.ApiService;
+import com.datn06.pickleconnect.API.ServiceHost;
+import com.datn06.pickleconnect.Booking.FieldSelectionActivity;
 import com.datn06.pickleconnect.Event.EventsActivity;
 import com.datn06.pickleconnect.R;
 import com.datn06.pickleconnect.Adapter.BannerAdapter;
@@ -80,6 +82,9 @@ public class HomeActivity extends AppCompatActivity {
     private MenuNavigation menuNavigation;
     private int currentBannerPosition = 0;
 
+    // ✅ ADDED: Flag để tránh load lại data nhiều lần
+    private boolean isDataLoaded = false;
+
     private final ActivityResultLauncher<String[]> locationPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 Boolean fineLocationGranted = result.get(Manifest.permission.ACCESS_FINE_LOCATION);
@@ -105,18 +110,13 @@ public class HomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // BỎ EdgeToEdge.enable(this); - Đây là nguyên nhân gây khoảng trống
-
         setContentView(R.layout.activity_home);
 
-        // SỬA LẠI: Chỉ apply window insets cho main layout, KHÔNG cho bottomNav
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            // Chỉ set padding cho top, KHÔNG set cho bottom
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
             return insets;
         });
-
 
         initViews();
         setupSearchListeners();
@@ -129,7 +129,13 @@ public class HomeActivity extends AppCompatActivity {
         loadingDialog = new LoadingDialog(this);
         menuNavigation = new MenuNavigation(this);
 
-        requestLocationAndLoadData();
+        // ✅ CHANGED: Chỉ load data lần đầu khi onCreate
+        if (savedInstanceState == null) {
+            requestLocationAndLoadData();
+        } else {
+            // Nếu Activity được restore, data đã có sẵn
+            isDataLoaded = true;
+        }
     }
 
     private void initViews() {
@@ -151,19 +157,16 @@ public class HomeActivity extends AppCompatActivity {
             mapCard.setOnClickListener(v -> openMapActivity());
         }
 
-        // Thêm listener cho nút xem thêm sân đấu
         findViewById(R.id.ivSeeMore).setOnClickListener(v -> openCourtList());
     }
 
     private void setupSearchListeners() {
-        // Click vào EditText
         if (etSearch != null) {
             etSearch.setOnClickListener(v -> openSearchActivity());
-            etSearch.setFocusable(false); // Không cho focus để tránh bàn phím hiện ra ở HomeActivity
+            etSearch.setFocusable(false);
             etSearch.setClickable(true);
         }
 
-        // Click vào cả CardView chứa thanh search
         if (searchCard != null) {
             searchCard.setOnClickListener(v -> openSearchActivity());
         }
@@ -171,21 +174,18 @@ public class HomeActivity extends AppCompatActivity {
 
     private void openSearchActivity() {
         Intent intent = new Intent(HomeActivity.this, com.datn06.pickleconnect.Search.SearchActivity.class);
-
-        // Truyền vị trí hiện tại của user
         intent.putExtra("userLat", currentLat);
         intent.putExtra("userLng", currentLng);
-
         Log.d(TAG, "Opening SearchActivity with location: " + currentLat + ", " + currentLng);
-
         startActivity(intent);
-        // Có thể thêm animation chuyển màn hình
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
+    /**
+     * ✅ UPDATED: Setup Bottom Navigation với kiểm tra trang hiện tại
+     */
     private void setupBottomNavigation() {
         if (bottomNavigation != null) {
-            // Set Home là item được chọn mặc định (vì đang ở HomeActivity)
             bottomNavigation.setSelectedItemId(R.id.nav_home);
 
             bottomNavigation.setOnItemSelectedListener(new BottomNavigationView.OnItemSelectedListener() {
@@ -193,13 +193,14 @@ public class HomeActivity extends AppCompatActivity {
                 public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                     int itemId = item.getItemId();
 
+                    // ✅ Kiểm tra nếu đang ở Home thì không navigate
                     if (itemId == R.id.nav_home) {
-                        // Đang ở Home rồi, không làm gì
-                        return true;
+                        return true; // Đã ở Home rồi, không làm gì cả
                     } else {
-                        // Chuyển đến trang khác thông qua MenuNavigation
+                        // Navigate sang trang khác
                         menuNavigation.navigateTo(itemId);
-                        // Không finish() Activity hiện tại để giữ lại trong back stack
+
+                        // ✅ KHÔNG gọi finish() - để Activity tự quản lý
                         return true;
                     }
                 }
@@ -210,9 +211,32 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Đảm bảo Home luôn được highlight khi quay lại Activity này
+        // ✅ Đảm bảo bottom navigation luôn highlight đúng item
         if (bottomNavigation != null) {
             bottomNavigation.setSelectedItemId(R.id.nav_home);
+        }
+
+        // ✅ ADDED: Không load lại data khi resume nếu đã có data
+        // Data chỉ được load lại khi có intent mới (qua onNewIntent)
+    }
+
+    /**
+     * ✅ ADDED: Xử lý khi Activity được gọi lại bằng intent mới
+     * (Khi user navigate về Home từ bottom navigation)
+     */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent); // Cập nhật intent mới
+
+        Log.d(TAG, "onNewIntent called - Activity reused, not reloading data");
+
+        // ✅ OPTIONAL: Có thể thêm logic để refresh data nếu cần
+        // Ví dụ: nếu có flag "forceRefresh" trong intent
+        boolean forceRefresh = intent.getBooleanExtra("forceRefresh", false);
+        if (forceRefresh) {
+            Log.d(TAG, "Force refresh requested");
+            loadHomeData();
         }
     }
 
@@ -229,52 +253,48 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
-        // 1. Dùng PagerSnapHelper để cuộn từng item một (Quan trọng cho dot indicator)
         PagerSnapHelper snapHelper = new PagerSnapHelper();
         snapHelper.attachToRecyclerView(rvBanner);
 
-        // 2. Thêm OnScrollListener để cập nhật dot
         rvBanner.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
 
-                // Chỉ kiểm tra khi cuộn đã dừng
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     View centerView = snapHelper.findSnapView(bannerLayoutManager);
                     if (centerView != null) {
                         int snapPosition = bannerLayoutManager.getPosition(centerView);
                         if (currentBannerPosition != snapPosition) {
                             currentBannerPosition = snapPosition;
-                            updateDotIndicator(); // <--- Gọi hàm cập nhật dot
+                            updateDotIndicator();
                         }
                     }
                 }
             }
         });
 
-        // THIẾT LẬP SPORTS VENUES
-        // 1. Dùng FacilityGroupAdapter mới
+        // ✅ UPDATED: Changed callback to open FieldSelectionActivity instead of EventsActivity
         facilityGroupAdapter = new FacilityGroupAdapter(this, new FacilityAdapter.OnFacilityClickListener() {
             @Override
             public void onFacilityClick(FacilityDTO facility) {
-                openFacilityDetail(facility);
+                // ✅ CHANGED: Open booking screen instead of events
+                openFieldSelection(facility);
             }
 
             @Override
             public void onBookClick(FacilityDTO facility) {
-                bookFacility(facility);
+                // ✅ CHANGED: Open booking screen
+                openFieldSelection(facility);
             }
         });
 
-        // 2. Đổi LayoutManager sang HOẠT ĐỘNG NGANG (HORIZONTAL)
         LinearLayoutManager facilityLayoutManager = new LinearLayoutManager(
                 this, LinearLayoutManager.HORIZONTAL, false);
 
         rvSportsVenues.setLayoutManager(facilityLayoutManager);
-        rvSportsVenues.setAdapter(facilityGroupAdapter); // Sử dụng adapter nhóm mới
+        rvSportsVenues.setAdapter(facilityGroupAdapter);
 
-        // 3. Thêm PagerSnapHelper
         PagerSnapHelper facilitySnapHelper = new PagerSnapHelper();
         facilitySnapHelper.attachToRecyclerView(rvSportsVenues);
 
@@ -283,14 +303,13 @@ public class HomeActivity extends AppCompatActivity {
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
 
-                // Chỉ kiểm tra khi cuộn đã dừng
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     View centerView = facilitySnapHelper.findSnapView(facilityLayoutManager);
                     if (centerView != null) {
                         int snapPosition = facilityLayoutManager.getPosition(centerView);
                         if (currentFacilityGroupPosition != snapPosition) {
                             currentFacilityGroupPosition = snapPosition;
-                            updateFacilityDotIndicator(); // <--- Gọi hàm cập nhật dot mới
+                            updateFacilityDotIndicator();
                         }
                     }
                 }
@@ -311,17 +330,13 @@ public class HomeActivity extends AppCompatActivity {
         return groupedList;
     }
 
-    /**
-     * Tạo các dot indicator dựa trên số lượng banner.
-     */
     private void setupDotIndicator(int dotCount) {
         if (dotsContainer == null) return;
 
-        dotsContainer.removeAllViews(); // Xóa các dot cũ
+        dotsContainer.removeAllViews();
 
         for (int i = 0; i < dotCount; i++) {
             View dot = new View(this);
-            // Kích thước của dot inactive (8dp)
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     (int) getResources().getDimension(R.dimen.dot_inactive_size),
                     (int) getResources().getDimension(R.dimen.dot_inactive_size));
@@ -332,18 +347,14 @@ public class HomeActivity extends AppCompatActivity {
                     0);
 
             dot.setLayoutParams(params);
-            dot.setBackgroundResource(R.drawable.dot_inactive); // dot_inactive là màu xám/trắng
+            dot.setBackgroundResource(R.drawable.dot_inactive);
             dotsContainer.addView(dot);
         }
 
-        // Cập nhật trạng thái ban đầu
         currentBannerPosition = 0;
         updateDotIndicator();
     }
 
-    /**
-     * Cập nhật trạng thái của dot (Active/Inactive)
-     */
     private void updateDotIndicator() {
         int dotCount = dotsContainer.getChildCount();
         if (dotCount == 0) return;
@@ -353,12 +364,10 @@ public class HomeActivity extends AppCompatActivity {
             LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) dot.getLayoutParams();
 
             if (i == currentBannerPosition) {
-                // Dot Active: Kích thước lớn hơn (10dp) và màu active
-                dot.setBackgroundResource(R.drawable.dot_active); // dot_active là màu xanh
+                dot.setBackgroundResource(R.drawable.dot_active);
                 params.width = (int) getResources().getDimension(R.dimen.dot_active_size);
                 params.height = (int) getResources().getDimension(R.dimen.dot_active_size);
             } else {
-                // Dot Inactive: Kích thước nhỏ hơn (8dp) và màu inactive
                 dot.setBackgroundResource(R.drawable.dot_inactive);
                 params.width = (int) getResources().getDimension(R.dimen.dot_inactive_size);
                 params.height = (int) getResources().getDimension(R.dimen.dot_inactive_size);
@@ -367,17 +376,13 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Tạo các dot indicator dựa trên số lượng NHÓM (trang) sân.
-     */
     private void setupFacilityDotIndicator(int dotCount) {
         if (rvFacilitiesDotsContainer == null) return;
 
-        rvFacilitiesDotsContainer.removeAllViews(); // Xóa các dot cũ
+        rvFacilitiesDotsContainer.removeAllViews();
 
         for (int i = 0; i < dotCount; i++) {
             View dot = new View(this);
-            // Kích thước của dot inactive (8dp)
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     (int) getResources().getDimension(R.dimen.dot_inactive_size),
                     (int) getResources().getDimension(R.dimen.dot_inactive_size));
@@ -392,14 +397,10 @@ public class HomeActivity extends AppCompatActivity {
             rvFacilitiesDotsContainer.addView(dot);
         }
 
-        // Cập nhật trạng thái ban đầu
         currentFacilityGroupPosition = 0;
         updateFacilityDotIndicator();
     }
 
-    /**
-     * Cập nhật trạng thái của dot (Active/Inactive) cho Sân
-     */
     private void updateFacilityDotIndicator() {
         if (rvFacilitiesDotsContainer == null) return;
         int dotCount = rvFacilitiesDotsContainer.getChildCount();
@@ -410,12 +411,10 @@ public class HomeActivity extends AppCompatActivity {
             LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) dot.getLayoutParams();
 
             if (i == currentFacilityGroupPosition) {
-                // Dot Active
                 dot.setBackgroundResource(R.drawable.dot_active);
                 params.width = (int) getResources().getDimension(R.dimen.dot_active_size);
                 params.height = (int) getResources().getDimension(R.dimen.dot_active_size);
             } else {
-                // Dot Inactive
                 dot.setBackgroundResource(R.drawable.dot_inactive);
                 params.width = (int) getResources().getDimension(R.dimen.dot_inactive_size);
                 params.height = (int) getResources().getDimension(R.dimen.dot_inactive_size);
@@ -425,7 +424,8 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void setupApiService() {
-        apiService = ApiClient.getApiService();
+        apiService = ApiClient.createService(ServiceHost.API_SERVICE, ApiService.class);
+        Log.d(TAG, "API Service initialized for port 9003");
     }
 
     private void setupLocationClient() {
@@ -434,6 +434,12 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void requestLocationAndLoadData() {
+        // ✅ ADDED: Kiểm tra nếu data đã được load rồi thì không load lại
+        if (isDataLoaded) {
+            Log.d(TAG, "Data already loaded, skipping");
+            return;
+        }
+
         if (checkLocationPermission()) {
             Log.d(TAG, "Permission already granted");
             showLoadingDialog("Đang lấy vị trí của bạn...");
@@ -485,7 +491,6 @@ public class HomeActivity extends AppCompatActivity {
                     currentLng = DEFAULT_LNG;
                     updateLoadingMessage("Đang tải dữ liệu...");
                 }
-                // Tiếp tục load data, loading dialog vẫn hiển thị
                 loadHomeData();
 
             }).addOnFailureListener(this, e -> {
@@ -526,18 +531,14 @@ public class HomeActivity extends AppCompatActivity {
 
                                 if (homeResponse.getData().getFeaturedFacilities() != null) {
                                     List<FacilityDTO> facilities = homeResponse.getData().getFeaturedFacilities();
-
-                                    // **BƯỚC CHÍNH: NHÓM DỮ LIỆU SÂN**
                                     List<List<FacilityDTO>> facilityGroups = groupFacilities(facilities, 3);
-
-                                    // Cập nhật adapter nhóm mới
                                     facilityGroupAdapter.setFacilityGroupList(facilityGroups);
-
-                                    // Cập nhật dot indicator cho sân (đã được sửa trong yêu cầu trước)
                                     setupFacilityDotIndicator(facilityGroups.size());
-
                                     Log.d(TAG, "Loaded " + facilities.size() + " facilities, grouped into " + facilityGroups.size() + " pages.");
                                 }
+
+                                // ✅ ADDED: Đánh dấu data đã được load
+                                isDataLoaded = true;
 
                                 Toast.makeText(HomeActivity.this, "Đã tải xong!", Toast.LENGTH_SHORT).show();
                             } else {
@@ -594,17 +595,29 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    private void openFacilityDetail(FacilityDTO facility) {
-        // Chuyển sang EventsActivity và truyền facilityId
-        Intent intent = new Intent(HomeActivity.this, EventsActivity.class);
+    // ✅ UPDATED: Changed to open FieldSelectionActivity instead of EventsActivity
+    private void openFieldSelection(FacilityDTO facility) {
+        Intent intent = new Intent(HomeActivity.this, FieldSelectionActivity.class);
         intent.putExtra("facilityId", facility.getFacilityId());
         intent.putExtra("facilityName", facility.getFacilityName());
+        // bookDate will be set to today's date in FieldSelectionActivity
+
+        Log.d(TAG, "Opening FieldSelectionActivity for facility: " + facility.getFacilityName());
+
         startActivity(intent);
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
+    // ✅ KEPT: Old method renamed for backward compatibility if needed
+    @Deprecated
+    private void openFacilityDetail(FacilityDTO facility) {
+        // This now redirects to field selection
+        openFieldSelection(facility);
+    }
+
+    // ✅ UPDATED: Also opens field selection
     private void bookFacility(FacilityDTO facility) {
-        Toast.makeText(this, "Đặt sân: " + facility.getFacilityName(), Toast.LENGTH_SHORT).show();
+        openFieldSelection(facility);
     }
 
     private void openMapActivity() {
@@ -636,7 +649,6 @@ public class HomeActivity extends AppCompatActivity {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -651,6 +663,4 @@ public class HomeActivity extends AppCompatActivity {
             }
         }
     }
-
-
 }

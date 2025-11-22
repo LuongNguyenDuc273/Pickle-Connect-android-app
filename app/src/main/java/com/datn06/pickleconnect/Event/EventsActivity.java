@@ -12,7 +12,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.datn06.pickleconnect.API.ApiClient;
+import com.datn06.pickleconnect.API.ApiService;
+import com.datn06.pickleconnect.API.ServiceHost;
 import com.datn06.pickleconnect.Adapter.EventAdapter;
+import com.datn06.pickleconnect.Booking.FieldSelectionActivity;
 import com.datn06.pickleconnect.R;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -25,19 +28,26 @@ public class EventsActivity extends AppCompatActivity {
 
     private static final String TAG = "EventSelection";
 
+    // API Service
+    private ApiService apiService;
+
+    // UI Components
     private ImageView btnBack;
     private TextView tabProduct;
     private TextView tabEvent;
     private TextView tvDateRange;
     private RecyclerView recyclerViewEvents;
     private View dateSelector;
-    private TextView tvFacilityName;
 
+    // Adapter
     private EventAdapter eventAdapter;
+
+    // Date
     private Calendar startDate;
     private Calendar endDate;
     private SimpleDateFormat dateFormat;
 
+    // Facility Info
     private Integer facilityId = null;
     private String facilityName = null;
 
@@ -46,18 +56,39 @@ public class EventsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_events);
 
+        // Initialize API Service first
+        initApiService();
+
+        // Get facility data from Intent
         getFacilityIdFromIntent();
 
+        // Initialize views
         initViews();
+
+        // Setup adapter
         setupAdapter();
+
+        // Setup listeners
         setupListeners();
+
+        // Setup default dates
         setupDefaultDates();
 
-        updateFacilityInfo();
-
+        // Load events
         loadEvents();
     }
 
+    /**
+     * Initialize API Service
+     */
+    private void initApiService() {
+        apiService = ApiClient.createService(ServiceHost.API_SERVICE, ApiService.class);
+        Log.d(TAG, "API Service initialized for port 9003 (EventsActivity)");
+    }
+
+    /**
+     * Get facility ID and name from Intent
+     */
     private void getFacilityIdFromIntent() {
         Intent intent = getIntent();
         if (intent != null) {
@@ -76,6 +107,9 @@ public class EventsActivity extends AppCompatActivity {
         Log.d(TAG, "Received facilityName: " + facilityName);
     }
 
+    /**
+     * Initialize all views
+     */
     private void initViews() {
         btnBack = findViewById(R.id.btnBack);
         tabProduct = findViewById(R.id.tabProduct);
@@ -90,47 +124,52 @@ public class EventsActivity extends AppCompatActivity {
         endDate.add(Calendar.DAY_OF_MONTH, 7);
     }
 
-    private void updateFacilityInfo() {
-        if (facilityName != null && tvFacilityName != null) {
-            tvFacilityName.setText(facilityName);
-            tvFacilityName.setVisibility(View.VISIBLE);
-        }
-
-        if (getSupportActionBar() != null && facilityName != null) {
-            getSupportActionBar().setSubtitle("Sự kiện tại " + facilityName);
-        }
-    }
-
+    /**
+     * Setup RecyclerView adapter
+     */
     private void setupAdapter() {
-        eventAdapter = new EventAdapter(this); // Truyền context vào
-
+        eventAdapter = new EventAdapter(this);
         recyclerViewEvents.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewEvents.setAdapter(eventAdapter);
     }
 
+    /**
+     * Setup all click listeners
+     */
     private void setupListeners() {
+        // Back button
         btnBack.setOnClickListener(v -> finish());
 
+        // Tab Product - Switch to FieldSelectionActivity
         tabProduct.setOnClickListener(v -> {
-            Toast.makeText(this, "Chuyển sang đặt sân thường", Toast.LENGTH_SHORT).show();
-
-            if (facilityId != null) {
-                // TODO: Chuyển sang BookingActivity với facilityId
-            }
+            Intent intent = new Intent(EventsActivity.this, FieldSelectionActivity.class);
+            intent.putExtra("facilityId", facilityId != null ? facilityId.longValue() : 0L);
+            intent.putExtra("facilityName", facilityName);
+            startActivity(intent);
+            // Close current activity
             finish();
         });
 
+        // Tab Event - Already here
         tabEvent.setOnClickListener(v -> {
+            // Do nothing, already on this tab
             Toast.makeText(this, "Đang ở tab sự kiện", Toast.LENGTH_SHORT).show();
         });
 
+        // Date selector
         dateSelector.setOnClickListener(v -> showDateRangePicker());
     }
 
+    /**
+     * Setup default date range (today + 7 days)
+     */
     private void setupDefaultDates() {
         updateDateRangeDisplay();
     }
 
+    /**
+     * Update date range display text
+     */
     private void updateDateRangeDisplay() {
         String display = dateFormat.format(startDate.getTime()) +
                 " - " +
@@ -138,7 +177,11 @@ public class EventsActivity extends AppCompatActivity {
         tvDateRange.setText(display);
     }
 
+    /**
+     * Show date range picker dialog
+     */
     private void showDateRangePicker() {
+        // First pick start date
         DatePickerDialog startPicker = new DatePickerDialog(
                 this,
                 (view, year, month, dayOfMonth) -> {
@@ -154,12 +197,16 @@ public class EventsActivity extends AppCompatActivity {
         startPicker.show();
     }
 
+    /**
+     * Show end date picker dialog
+     */
     private void showEndDatePicker() {
         DatePickerDialog endPicker = new DatePickerDialog(
                 this,
                 (view, year, month, dayOfMonth) -> {
                     endDate.set(year, month, dayOfMonth);
 
+                    // Validate end date is after start date
                     if (endDate.before(startDate)) {
                         Toast.makeText(this,
                                 "Ngày kết thúc phải sau ngày bắt đầu",
@@ -167,6 +214,7 @@ public class EventsActivity extends AppCompatActivity {
                         return;
                     }
 
+                    // Update display and reload events
                     updateDateRangeDisplay();
                     loadEvents();
                 },
@@ -180,6 +228,9 @@ public class EventsActivity extends AppCompatActivity {
         endPicker.show();
     }
 
+    /**
+     * Load events from API
+     */
     private void loadEvents() {
         SimpleDateFormat apiDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         String startDateStr = apiDateFormat.format(startDate.getTime());
@@ -190,7 +241,8 @@ public class EventsActivity extends AppCompatActivity {
         Log.d(TAG, "Loading events from " + startDateStr + " to " + endDateStr +
                 " for facilityId: " + facilityIdStr);
 
-        Call<EventResponse> call = ApiClient.getApiService().getEventList(
+        // Call API
+        Call<EventResponse> call = apiService.getEventList(
                 facilityIdStr,
                 startDateStr,
                 endDateStr

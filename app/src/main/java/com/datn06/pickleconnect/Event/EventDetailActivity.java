@@ -11,6 +11,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.datn06.pickleconnect.API.ApiClient;
+import com.datn06.pickleconnect.API.ApiService;
+import com.datn06.pickleconnect.API.ServiceHost;
 import com.datn06.pickleconnect.Model.EventDetailDTO;
 import com.datn06.pickleconnect.R;
 import com.google.android.material.button.MaterialButton;
@@ -26,6 +28,9 @@ import retrofit2.Response;
 public class EventDetailActivity extends AppCompatActivity {
 
     private static final String TAG = "EventDetailActivity";
+
+    // ✅ ADDED: API Service field
+    private ApiService apiService;
 
     // Header
     private ImageView btnBack;
@@ -65,6 +70,9 @@ public class EventDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_event_detail);
 
+        // ✅ ADDED: Initialize API Service first
+        initApiService();
+
         getEventIdFromIntent();
         initViews();
         setupListeners();
@@ -77,6 +85,12 @@ public class EventDetailActivity extends AppCompatActivity {
         }
     }
 
+    // ✅ ADDED: Initialize API Service with correct port
+    private void initApiService() {
+        apiService = ApiClient.createService(ServiceHost.API_SERVICE, ApiService.class);
+        Log.d(TAG, "API Service initialized for port 9003 (EventDetail)");
+    }
+
     private void getEventIdFromIntent() {
         if (getIntent() != null) {
             eventId = getIntent().getStringExtra("eventId");
@@ -87,13 +101,13 @@ public class EventDetailActivity extends AppCompatActivity {
     private void initViews() {
         btnBack = findViewById(R.id.btnBack);
 
-        // Card Thông tin sân - SỬA LẠI
+        // Card Thông tin sân
         MaterialCardView cardProductInfo = findViewById(R.id.cardProductInfo);
         LinearLayout productInfoContainer = (LinearLayout) cardProductInfo.getChildAt(0);
         tvFacilityName = findTextViewInRow(productInfoContainer, 1);
         tvFacilityAddress = findTextViewInRow(productInfoContainer, 2);
 
-        // Card Thông tin sự kiện - SỬA LẠI
+        // Card Thông tin sự kiện
         MaterialCardView cardEventInfo = findViewById(R.id.cardEventInfo);
         LinearLayout eventInfoContainer = (LinearLayout) cardEventInfo.getChildAt(0);
         tvEventName = findTextViewInRow(eventInfoContainer, 1);
@@ -174,8 +188,6 @@ public class EventDetailActivity extends AppCompatActivity {
         btnBookNow.setOnClickListener(v -> {
             if (currentEvent != null && currentEvent.getCanRegister()) {
                 registerEvent();
-            } else {
-//                Toast.makeText(this, "Sự kiện không còn nhận đăng ký", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -184,7 +196,9 @@ public class EventDetailActivity extends AppCompatActivity {
         btnBookNow.setEnabled(false);
         btnBookNow.setText("Đang tải...");
 
-        Call<EventDetailResponse> call = ApiClient.getApiService().getEventDetail(eventId);
+        // ✅ FIXED: Use the initialized apiService with correct port
+        Call<EventDetailResponse> call = apiService.getEventDetail(eventId);
+
         call.enqueue(new Callback<EventDetailResponse>() {
             @Override
             public void onResponse(Call<EventDetailResponse> call, Response<EventDetailResponse> response) {
