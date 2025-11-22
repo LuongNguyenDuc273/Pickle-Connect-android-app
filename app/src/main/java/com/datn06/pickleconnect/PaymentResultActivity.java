@@ -86,7 +86,7 @@ public class PaymentResultActivity extends AppCompatActivity {
         
         // Display booking ID (txnRef)
         if (txnRef != null && !txnRef.isEmpty()) {
-            tvBookingId.setText("Mã phiếu: SA" + txnRef);
+            tvBookingId.setText(txnRef);
         } else {
             tvBookingId.setText("Mã phiếu: Đang cập nhật...");
         }

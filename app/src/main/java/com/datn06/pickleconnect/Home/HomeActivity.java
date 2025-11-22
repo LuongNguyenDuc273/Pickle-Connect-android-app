@@ -150,6 +150,9 @@ public class HomeActivity extends AppCompatActivity {
         if (mapCard != null) {
             mapCard.setOnClickListener(v -> openMapActivity());
         }
+
+        // Thêm listener cho nút xem thêm sân đấu
+        findViewById(R.id.ivSeeMore).setOnClickListener(v -> openCourtList());
     }
 
     private void setupSearchListeners() {
@@ -608,6 +611,13 @@ public class HomeActivity extends AppCompatActivity {
         Intent intent = new Intent(HomeActivity.this, com.datn06.pickleconnect.Map.MapActivity.class);
         startActivity(intent);
         overridePendingTransition(0, 0);
+    }
+
+    private void openCourtList() {
+        Intent intent = new Intent(HomeActivity.this, com.datn06.pickleconnect.Court.CourtListActivity.class);
+        intent.putExtra("userLatitude", currentLat);
+        intent.putExtra("userLongitude", currentLng);
+        startActivity(intent);
     }
 
     private void showLoading() {

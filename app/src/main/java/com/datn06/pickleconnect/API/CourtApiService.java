@@ -1,9 +1,12 @@
 package com.datn06.pickleconnect.API;
 
+import com.datn06.pickleconnect.Common.BaseRequest;
 import com.datn06.pickleconnect.Common.BaseResponse;
 import com.datn06.pickleconnect.Model.CreateBookingCourtRequest;
+import com.datn06.pickleconnect.Model.FacilitySearchResponse;
 import com.datn06.pickleconnect.Model.FieldBookingResponse;
 import com.datn06.pickleconnect.Model.PaymentUrlResponse;
+import com.datn06.pickleconnect.Model.SearchCourtRequest;
 
 import retrofit2.Call;
 import retrofit2.http.*;
@@ -59,17 +62,58 @@ public interface CourtApiService {
     );
 
     /**
+     * Search courts with filters
+     * 
+     * @param request Search parameters including location, distance, pagination
+     * @return Response containing list of facilities and pagination info
+     */
+    @POST("court/search")
+    Call<FacilitySearchResponse> searchCourts(
+        @Body SearchCourtRequest request
+    );
+
+    /**
+     * Get all active cities/provinces
+     * 
+     * @return List of all cities with status=1
+     */
+    @GET("court/cities")
+    Call<java.util.List<com.datn06.pickleconnect.Model.CityDTO>> getCities();
+
+    /**
+     * Get districts by city ID
+     * 
+     * @param cityId ID of the city/province
+     * @return List of districts belonging to the city
+     */
+    @GET("court/districts")
+    Call<java.util.List<com.datn06.pickleconnect.Model.DistrictDTO>> getDistricts(
+        @Query("cityId") String cityId
+    );
+
+    /**
+     * Get user's saved facilities
+     * 
+     * @param request Request containing userId, page, size, sortOrder
+     * @return Response containing list of saved facilities
+     */
+    @POST("court/get-saved-facility")
+    Call<BaseResponse<FacilitySearchResponse>> getSavedFacilities(
+        @Body com.datn06.pickleconnect.Model.GetSavedCourtsRequest request
+    );
+
+    /**
      * Request DTO for saving facility to favorites
      */
-    class SaveFacilityUserRequest {
+    class SaveFacilityUserRequest extends BaseRequest {
         private Long userId;
         private Long facilityId;
-        private String requestId;
-        
+
         public SaveFacilityUserRequest(Long userId, Long facilityId) {
             this.userId = userId;
             this.facilityId = facilityId;
-            this.requestId = String.valueOf(System.currentTimeMillis());
+            // BaseRequest auto-generates requestId
+            setRequestId(String.valueOf(System.currentTimeMillis()));
         }
         
         // Getters and Setters
@@ -89,13 +133,6 @@ public interface CourtApiService {
             this.facilityId = facilityId;
         }
         
-        public String getRequestId() {
-            return requestId;
-        }
-        
-        public void setRequestId(String requestId) {
-            this.requestId = requestId;
-        }
     }
 
     // Future endpoints to be implemented:
