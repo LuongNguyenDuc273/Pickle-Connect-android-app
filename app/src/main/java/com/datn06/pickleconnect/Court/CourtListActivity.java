@@ -118,8 +118,8 @@ public class CourtListActivity extends AppCompatActivity {
         });
 
         btnHistory.setOnClickListener(v -> {
-            // TODO: Open booking history
-            Toast.makeText(this, "Lịch sử đặt sân", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, com.datn06.pickleconnect.Booking.BookingHistoryActivity.class);
+            startActivity(intent);
         });
 
         btnFilter.setOnClickListener(v -> showFilterBottomSheet());

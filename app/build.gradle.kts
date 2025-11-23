@@ -80,6 +80,7 @@ dependencies {
 
     implementation("androidx.recyclerview:recyclerview:1.3.0")
 
-
+    // FlexboxLayout for flexible layouts
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
 
 }
