@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.datn06.pickleconnect.MainActivity;
+import com.datn06.pickleconnect.Profile.ProfileActivity;
 import com.datn06.pickleconnect.R;
 import com.datn06.pickleconnect.Home.HomeActivity;
 import com.datn06.pickleconnect.Search.SearchedActivity;
@@ -33,7 +34,7 @@ public class MenuNavigation {
         }
         else if (destinationID == R.id.nav_account) {
             // Chuyển đến Account (Tài khoản)
-            Intent intent = new Intent(context, MainActivity.class);
+            Intent intent = new Intent(context, ProfileActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
         }

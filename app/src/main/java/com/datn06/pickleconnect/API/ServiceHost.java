@@ -7,10 +7,13 @@ package com.datn06.pickleconnect.API;
 public enum ServiceHost {
     // Member Command API - Authentication & Registration (port 9005)
     AUTH_SERVICE("http://10.0.2.2:9005/", "Auth Service (9005)"),
-    
+
+    // Member Query API - User Profile & Info (port 9002)
+    MEMBER_SERVICE("http://10.0.2.2:9002/", "Member Service (9002)"),
+
     // Court Service - Booking & Court Management (port 9008)
     COURT_SERVICE("http://10.0.2.2:9008/", "Court Service (9008)"),
-    
+
     // Main API Service (port 9003) - if still needed
     API_SERVICE("http://10.0.2.2:9003/", "API Service (9003)"),
     
