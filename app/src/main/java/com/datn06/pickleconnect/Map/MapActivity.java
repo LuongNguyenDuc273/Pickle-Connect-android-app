@@ -17,6 +17,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.API.ApiService;
+import com.datn06.pickleconnect.API.ServiceHost;
 import com.datn06.pickleconnect.Model.FacilityDTO;
 import com.datn06.pickleconnect.Home.HomeResponse;
 import com.datn06.pickleconnect.R;
@@ -48,7 +49,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private FusedLocationProviderClient fusedLocationClient;
     private CancellationTokenSource cancellationTokenSource;
+
+    // ✅ UPDATED: Kept as field for consistency
     private ApiService apiService;
+
     private LoadingDialog loadingDialog;
 
     private double currentLat = DEFAULT_LAT;
@@ -66,9 +70,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             return insets;
         });
 
+        // ✅ ADDED: Initialize API Service first
+        initApiService();
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         cancellationTokenSource = new CancellationTokenSource();
-        apiService = ApiClient.getApiService();
         loadingDialog = new LoadingDialog(this);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -77,6 +83,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             mapFragment.getMapAsync(this);
         }
     }
+
+    // ✅ ADDED: Initialize API Service with correct port
+    private void initApiService() {
+        apiService = ApiClient.createService(ServiceHost.API_SERVICE, ApiService.class);
+        Log.d(TAG, "API Service initialized for port 9003 (MapActivity)");
+    }
+
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
@@ -196,6 +209,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void loadFacilities() {
+        // ✅ FIXED: Use the initialized apiService with correct port
         apiService.getHomePageData(currentLat, currentLng)
                 .enqueue(new Callback<HomeResponse>() {
                     @Override

@@ -11,28 +11,42 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.API.ApiService;
-import com.datn06.pickleconnect.API.AuthApiService;
 import com.datn06.pickleconnect.API.ServiceHost;
+import com.datn06.pickleconnect.Booking.FieldSelectionActivity;
+import com.datn06.pickleconnect.Event.EventsActivity;
 import com.datn06.pickleconnect.R;
 import com.datn06.pickleconnect.Adapter.BannerAdapter;
 import com.datn06.pickleconnect.Adapter.FacilityAdapter;
+import com.datn06.pickleconnect.Adapter.FacilityGroupAdapter;
 import com.datn06.pickleconnect.Model.FacilityDTO;
 import com.datn06.pickleconnect.Home.HomeResponse;
 import com.datn06.pickleconnect.Utils.LoadingDialog;
+import com.datn06.pickleconnect.Menu.MenuNavigation;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationTokenSource;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -47,19 +61,29 @@ public class HomeActivity extends AppCompatActivity {
 
     private RecyclerView rvBanner;
     private RecyclerView rvSportsVenues;
+    private EditText etSearch;
+    private androidx.cardview.widget.CardView searchCard;
     private View progressBar;
     private Button btnFindNearby;
     private androidx.cardview.widget.CardView mapCard;
+    private BottomNavigationView bottomNavigation;
+    private LinearLayout dotsContainer;
+    private LinearLayout rvFacilitiesDotsContainer;
+    private int currentFacilityGroupPosition = 0;
 
     private BannerAdapter bannerAdapter;
-    private FacilityAdapter facilityAdapter;
+    private FacilityGroupAdapter facilityGroupAdapter;
     private ApiService apiService;
 
     private FusedLocationProviderClient fusedLocationClient;
     private CancellationTokenSource cancellationTokenSource;
 
-    // Thêm LoadingDialog
     private LoadingDialog loadingDialog;
+    private MenuNavigation menuNavigation;
+    private int currentBannerPosition = 0;
+
+    // ✅ ADDED: Flag để tránh load lại data nhiều lần
+    private boolean isDataLoaded = false;
 
     private final ActivityResultLauncher<String[]> locationPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
@@ -69,7 +93,6 @@ public class HomeActivity extends AppCompatActivity {
                 if ((fineLocationGranted != null && fineLocationGranted) ||
                         (coarseLocationGranted != null && coarseLocationGranted)) {
                     Log.d(TAG, "Permission granted");
-                    // Hiển thị loading ngay sau khi được cấp quyền
                     showLoadingDialog("Đang lấy vị trí của bạn...");
                     getCurrentLocationAndLoad();
                 } else {
@@ -78,7 +101,6 @@ public class HomeActivity extends AppCompatActivity {
                             Toast.LENGTH_LONG).show();
                     currentLat = DEFAULT_LAT;
                     currentLng = DEFAULT_LNG;
-                    // Hiển thị loading khi load dữ liệu
                     showLoadingDialog("Đang tải dữ liệu...");
                     loadHomeData();
                 }
@@ -87,26 +109,33 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+
         setContentView(R.layout.activity_home);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
             return insets;
         });
 
-        // ✅ ADDED: Initialize ApiClient with context to load saved token
-        ApiClient.init(this);
-
         initViews();
+        setupSearchListeners();
         setupRecyclerViews();
         setupApiService();
         setupLocationClient();
+        setupBottomNavigation();
+        dotsContainer = findViewById(R.id.dotsContainer);
 
-        // Khởi tạo LoadingDialog
         loadingDialog = new LoadingDialog(this);
+        menuNavigation = new MenuNavigation(this);
 
-        requestLocationAndLoadData();
+        // ✅ CHANGED: Chỉ load data lần đầu khi onCreate
+        if (savedInstanceState == null) {
+            requestLocationAndLoadData();
+        } else {
+            // Nếu Activity được restore, data đã có sẵn
+            isDataLoaded = true;
+        }
     }
 
     private void initViews() {
@@ -115,6 +144,10 @@ public class HomeActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         btnFindNearby = findViewById(R.id.btnFindNearby);
         mapCard = findViewById(R.id.mapCard);
+        bottomNavigation = findViewById(R.id.bottomNavigation);
+        rvFacilitiesDotsContainer = findViewById(R.id.rvFacilitiesDotsContainer);
+        etSearch = findViewById(R.id.etSearch);
+        searchCard = findViewById(R.id.searchCard);
 
         if (btnFindNearby != null) {
             btnFindNearby.setOnClickListener(v -> openMapActivity());
@@ -124,8 +157,87 @@ public class HomeActivity extends AppCompatActivity {
             mapCard.setOnClickListener(v -> openMapActivity());
         }
 
-        // Thêm listener cho nút xem thêm sân đấu
         findViewById(R.id.ivSeeMore).setOnClickListener(v -> openCourtList());
+    }
+
+    private void setupSearchListeners() {
+        if (etSearch != null) {
+            etSearch.setOnClickListener(v -> openSearchActivity());
+            etSearch.setFocusable(false);
+            etSearch.setClickable(true);
+        }
+
+        if (searchCard != null) {
+            searchCard.setOnClickListener(v -> openSearchActivity());
+        }
+    }
+
+    private void openSearchActivity() {
+        Intent intent = new Intent(HomeActivity.this, com.datn06.pickleconnect.Search.SearchActivity.class);
+        intent.putExtra("userLat", currentLat);
+        intent.putExtra("userLng", currentLng);
+        Log.d(TAG, "Opening SearchActivity with location: " + currentLat + ", " + currentLng);
+        startActivity(intent);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+    }
+
+    /**
+     * ✅ UPDATED: Setup Bottom Navigation với kiểm tra trang hiện tại
+     */
+    private void setupBottomNavigation() {
+        if (bottomNavigation != null) {
+            bottomNavigation.setSelectedItemId(R.id.nav_home);
+
+            bottomNavigation.setOnItemSelectedListener(new BottomNavigationView.OnItemSelectedListener() {
+                @Override
+                public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                    int itemId = item.getItemId();
+
+                    // ✅ Kiểm tra nếu đang ở Home thì không navigate
+                    if (itemId == R.id.nav_home) {
+                        return true; // Đã ở Home rồi, không làm gì cả
+                    } else {
+                        // Navigate sang trang khác
+                        menuNavigation.navigateTo(itemId);
+
+                        // ✅ KHÔNG gọi finish() - để Activity tự quản lý
+                        return true;
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // ✅ Đảm bảo bottom navigation luôn highlight đúng item
+        if (bottomNavigation != null) {
+            bottomNavigation.setSelectedItemId(R.id.nav_home);
+        }
+
+        // ✅ ADDED: Không load lại data khi resume nếu đã có data
+        // Data chỉ được load lại khi có intent mới (qua onNewIntent)
+    }
+
+    /**
+     * ✅ ADDED: Xử lý khi Activity được gọi lại bằng intent mới
+     * (Khi user navigate về Home từ bottom navigation)
+     */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent); // Cập nhật intent mới
+
+        Log.d(TAG, "onNewIntent called - Activity reused, not reloading data");
+
+        // ✅ OPTIONAL: Có thể thêm logic để refresh data nếu cần
+        // Ví dụ: nếu có flag "forceRefresh" trong intent
+        boolean forceRefresh = intent.getBooleanExtra("forceRefresh", false);
+        if (forceRefresh) {
+            Log.d(TAG, "Force refresh requested");
+            loadHomeData();
+        }
     }
 
     private void setupRecyclerViews() {
@@ -141,27 +253,179 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
-        facilityAdapter = new FacilityAdapter(this);
-        LinearLayoutManager facilityLayoutManager = new LinearLayoutManager(this);
-        rvSportsVenues.setLayoutManager(facilityLayoutManager);
-        rvSportsVenues.setAdapter(facilityAdapter);
+        PagerSnapHelper snapHelper = new PagerSnapHelper();
+        snapHelper.attachToRecyclerView(rvBanner);
 
-        facilityAdapter.setOnFacilityClickListener(new FacilityAdapter.OnFacilityClickListener() {
+        rvBanner.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    View centerView = snapHelper.findSnapView(bannerLayoutManager);
+                    if (centerView != null) {
+                        int snapPosition = bannerLayoutManager.getPosition(centerView);
+                        if (currentBannerPosition != snapPosition) {
+                            currentBannerPosition = snapPosition;
+                            updateDotIndicator();
+                        }
+                    }
+                }
+            }
+        });
+
+        // ✅ UPDATED: Changed callback to open FieldSelectionActivity instead of EventsActivity
+        facilityGroupAdapter = new FacilityGroupAdapter(this, new FacilityAdapter.OnFacilityClickListener() {
             @Override
             public void onFacilityClick(FacilityDTO facility) {
-                openFacilityDetail(facility);
+                // ✅ CHANGED: Open booking screen instead of events
+                openFieldSelection(facility);
             }
 
             @Override
             public void onBookClick(FacilityDTO facility) {
-                // Navigation đã được xử lý trong FacilityAdapter
-                // Callback này chỉ để log hoặc analytics nếu cần
+                // ✅ CHANGED: Open booking screen
+                openFieldSelection(facility);
+            }
+        });
+
+        LinearLayoutManager facilityLayoutManager = new LinearLayoutManager(
+                this, LinearLayoutManager.HORIZONTAL, false);
+
+        rvSportsVenues.setLayoutManager(facilityLayoutManager);
+        rvSportsVenues.setAdapter(facilityGroupAdapter);
+
+        PagerSnapHelper facilitySnapHelper = new PagerSnapHelper();
+        facilitySnapHelper.attachToRecyclerView(rvSportsVenues);
+
+        rvSportsVenues.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    View centerView = facilitySnapHelper.findSnapView(facilityLayoutManager);
+                    if (centerView != null) {
+                        int snapPosition = facilityLayoutManager.getPosition(centerView);
+                        if (currentFacilityGroupPosition != snapPosition) {
+                            currentFacilityGroupPosition = snapPosition;
+                            updateFacilityDotIndicator();
+                        }
+                    }
+                }
             }
         });
     }
 
+    private List<List<FacilityDTO>> groupFacilities(List<FacilityDTO> facilities, int groupSize) {
+        List<List<FacilityDTO>> groupedList = new ArrayList<>();
+        if (facilities == null || facilities.isEmpty()) {
+            return groupedList;
+        }
+
+        for (int i = 0; i < facilities.size(); i += groupSize) {
+            int endIndex = Math.min(i + groupSize, facilities.size());
+            groupedList.add(facilities.subList(i, endIndex));
+        }
+        return groupedList;
+    }
+
+    private void setupDotIndicator(int dotCount) {
+        if (dotsContainer == null) return;
+
+        dotsContainer.removeAllViews();
+
+        for (int i = 0; i < dotCount; i++) {
+            View dot = new View(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    (int) getResources().getDimension(R.dimen.dot_inactive_size),
+                    (int) getResources().getDimension(R.dimen.dot_inactive_size));
+            params.setMargins(
+                    (int) getResources().getDimension(R.dimen.dot_margin),
+                    0,
+                    (int) getResources().getDimension(R.dimen.dot_margin),
+                    0);
+
+            dot.setLayoutParams(params);
+            dot.setBackgroundResource(R.drawable.dot_inactive);
+            dotsContainer.addView(dot);
+        }
+
+        currentBannerPosition = 0;
+        updateDotIndicator();
+    }
+
+    private void updateDotIndicator() {
+        int dotCount = dotsContainer.getChildCount();
+        if (dotCount == 0) return;
+
+        for (int i = 0; i < dotCount; i++) {
+            View dot = dotsContainer.getChildAt(i);
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) dot.getLayoutParams();
+
+            if (i == currentBannerPosition) {
+                dot.setBackgroundResource(R.drawable.dot_active);
+                params.width = (int) getResources().getDimension(R.dimen.dot_active_size);
+                params.height = (int) getResources().getDimension(R.dimen.dot_active_size);
+            } else {
+                dot.setBackgroundResource(R.drawable.dot_inactive);
+                params.width = (int) getResources().getDimension(R.dimen.dot_inactive_size);
+                params.height = (int) getResources().getDimension(R.dimen.dot_inactive_size);
+            }
+            dot.setLayoutParams(params);
+        }
+    }
+
+    private void setupFacilityDotIndicator(int dotCount) {
+        if (rvFacilitiesDotsContainer == null) return;
+
+        rvFacilitiesDotsContainer.removeAllViews();
+
+        for (int i = 0; i < dotCount; i++) {
+            View dot = new View(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    (int) getResources().getDimension(R.dimen.dot_inactive_size),
+                    (int) getResources().getDimension(R.dimen.dot_inactive_size));
+            params.setMargins(
+                    (int) getResources().getDimension(R.dimen.dot_margin),
+                    0,
+                    (int) getResources().getDimension(R.dimen.dot_margin),
+                    0);
+
+            dot.setLayoutParams(params);
+            dot.setBackgroundResource(R.drawable.dot_inactive);
+            rvFacilitiesDotsContainer.addView(dot);
+        }
+
+        currentFacilityGroupPosition = 0;
+        updateFacilityDotIndicator();
+    }
+
+    private void updateFacilityDotIndicator() {
+        if (rvFacilitiesDotsContainer == null) return;
+        int dotCount = rvFacilitiesDotsContainer.getChildCount();
+        if (dotCount == 0) return;
+
+        for (int i = 0; i < dotCount; i++) {
+            View dot = rvFacilitiesDotsContainer.getChildAt(i);
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) dot.getLayoutParams();
+
+            if (i == currentFacilityGroupPosition) {
+                dot.setBackgroundResource(R.drawable.dot_active);
+                params.width = (int) getResources().getDimension(R.dimen.dot_active_size);
+                params.height = (int) getResources().getDimension(R.dimen.dot_active_size);
+            } else {
+                dot.setBackgroundResource(R.drawable.dot_inactive);
+                params.width = (int) getResources().getDimension(R.dimen.dot_inactive_size);
+                params.height = (int) getResources().getDimension(R.dimen.dot_inactive_size);
+            }
+            dot.setLayoutParams(params);
+        }
+    }
+
     private void setupApiService() {
-        apiService = ApiClient.getApiService();
+        apiService = ApiClient.createService(ServiceHost.API_SERVICE, ApiService.class);
+        Log.d(TAG, "API Service initialized for port 9003");
     }
 
     private void setupLocationClient() {
@@ -170,9 +434,14 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void requestLocationAndLoadData() {
+        // ✅ ADDED: Kiểm tra nếu data đã được load rồi thì không load lại
+        if (isDataLoaded) {
+            Log.d(TAG, "Data already loaded, skipping");
+            return;
+        }
+
         if (checkLocationPermission()) {
             Log.d(TAG, "Permission already granted");
-            // Hiển thị loading ngay khi bắt đầu
             showLoadingDialog("Đang lấy vị trí của bạn...");
             getCurrentLocationAndLoad();
         } else {
@@ -199,14 +468,12 @@ public class HomeActivity extends AppCompatActivity {
         if (!checkLocationPermission()) {
             currentLat = DEFAULT_LAT;
             currentLng = DEFAULT_LNG;
-            // Cập nhật message của loading dialog
             updateLoadingMessage("Đang tải dữ liệu...");
             loadHomeData();
             return;
         }
 
         try {
-            // Loading dialog đã được show từ trước, chỉ cần update message
             updateLoadingMessage("Đang xác định vị trí...");
 
             fusedLocationClient.getCurrentLocation(
@@ -217,26 +484,19 @@ public class HomeActivity extends AppCompatActivity {
                     currentLat = location.getLatitude();
                     currentLng = location.getLongitude();
                     Log.d(TAG, "GPS Location: " + currentLat + ", " + currentLng);
-
-                    // Cập nhật message khi đã lấy được vị trí
                     updateLoadingMessage("Đang tải dữ liệu gần bạn...");
                 } else {
                     Log.w(TAG, "Location is null, using default");
                     currentLat = DEFAULT_LAT;
                     currentLng = DEFAULT_LNG;
-
-                    // Cập nhật message khi dùng vị trí mặc định
                     updateLoadingMessage("Đang tải dữ liệu...");
                 }
-                // Tiếp tục load data, loading dialog vẫn hiển thị
                 loadHomeData();
 
             }).addOnFailureListener(this, e -> {
                 Log.e(TAG, "Failed to get location: " + e.getMessage(), e);
                 currentLat = DEFAULT_LAT;
                 currentLng = DEFAULT_LNG;
-
-                // Cập nhật message khi lỗi
                 updateLoadingMessage("Đang tải dữ liệu...");
                 loadHomeData();
             });
@@ -251,14 +511,12 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void loadHomeData() {
-        // Không cần showLoading() nữa vì đã có LoadingDialog
         Log.d(TAG, "Loading home data with location: " + currentLat + ", " + currentLng);
-        ApiService authService = ApiClient.createService(ServiceHost.API_SERVICE, ApiService.class);
-        authService.getHomePageData(currentLat, currentLng)
+
+        apiService.getHomePageData(currentLat, currentLng)
                 .enqueue(new Callback<HomeResponse>() {
                     @Override
                     public void onResponse(Call<HomeResponse> call, Response<HomeResponse> response) {
-                        // Ẩn loading dialog khi có response
                         hideLoadingDialog();
 
                         if (response.isSuccessful() && response.body() != null) {
@@ -267,15 +525,21 @@ public class HomeActivity extends AppCompatActivity {
                             if ("200".equals(homeResponse.getCode()) && homeResponse.getData() != null) {
                                 if (homeResponse.getData().getBanners() != null) {
                                     bannerAdapter.setBannerList(homeResponse.getData().getBanners());
+                                    setupDotIndicator(homeResponse.getData().getBanners().size());
                                     Log.d(TAG, "Loaded " + homeResponse.getData().getBanners().size() + " banners");
                                 }
 
                                 if (homeResponse.getData().getFeaturedFacilities() != null) {
-                                    facilityAdapter.setFacilityList(homeResponse.getData().getFeaturedFacilities());
-                                    Log.d(TAG, "Loaded " + homeResponse.getData().getFeaturedFacilities().size() + " facilities");
+                                    List<FacilityDTO> facilities = homeResponse.getData().getFeaturedFacilities();
+                                    List<List<FacilityDTO>> facilityGroups = groupFacilities(facilities, 3);
+                                    facilityGroupAdapter.setFacilityGroupList(facilityGroups);
+                                    setupFacilityDotIndicator(facilityGroups.size());
+                                    Log.d(TAG, "Loaded " + facilities.size() + " facilities, grouped into " + facilityGroups.size() + " pages.");
                                 }
 
-                                // Hiển thị thông báo thành công
+                                // ✅ ADDED: Đánh dấu data đã được load
+                                isDataLoaded = true;
+
                                 Toast.makeText(HomeActivity.this, "Đã tải xong!", Toast.LENGTH_SHORT).show();
                             } else {
                                 showError("Lỗi: " + homeResponse.getMessage());
@@ -288,7 +552,6 @@ public class HomeActivity extends AppCompatActivity {
 
                     @Override
                     public void onFailure(Call<HomeResponse> call, Throwable t) {
-                        // Ẩn loading dialog khi có lỗi
                         hideLoadingDialog();
                         showError("Lỗi kết nối: " + t.getMessage());
                         Log.e(TAG, "API call failed", t);
@@ -296,13 +559,10 @@ public class HomeActivity extends AppCompatActivity {
                 });
     }
 
-    // Phương thức hiển thị LoadingDialog với message tùy chỉnh
     private void showLoadingDialog(String message) {
         if (loadingDialog != null) {
             try {
                 loadingDialog.show();
-                // Nếu LoadingDialog của bạn có phương thức setMessage, sử dụng nó
-                // loadingDialog.setMessage(message);
                 Log.d(TAG, "Loading: " + message);
             } catch (Exception e) {
                 Log.e(TAG, "Error showing loading dialog", e);
@@ -310,16 +570,10 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    // Phương thức cập nhật message của LoadingDialog
     private void updateLoadingMessage(String message) {
-        // Nếu LoadingDialog của bạn có phương thức setMessage, sử dụng nó
-        // if (loadingDialog != null) {
-        //     loadingDialog.setMessage(message);
-        // }
         Log.d(TAG, "Loading: " + message);
     }
 
-    // Phương thức ẩn LoadingDialog
     private void hideLoadingDialog() {
         if (loadingDialog != null) {
             try {
@@ -341,13 +595,35 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+    // ✅ UPDATED: Changed to open FieldSelectionActivity instead of EventsActivity
+    private void openFieldSelection(FacilityDTO facility) {
+        Intent intent = new Intent(HomeActivity.this, FieldSelectionActivity.class);
+        intent.putExtra("facilityId", facility.getFacilityId());
+        intent.putExtra("facilityName", facility.getFacilityName());
+        // bookDate will be set to today's date in FieldSelectionActivity
+
+        Log.d(TAG, "Opening FieldSelectionActivity for facility: " + facility.getFacilityName());
+
+        startActivity(intent);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+    }
+
+    // ✅ KEPT: Old method renamed for backward compatibility if needed
+    @Deprecated
     private void openFacilityDetail(FacilityDTO facility) {
-        Toast.makeText(this, "Xem chi tiết: " + facility.getFacilityName(), Toast.LENGTH_SHORT).show();
+        // This now redirects to field selection
+        openFieldSelection(facility);
+    }
+
+    // ✅ UPDATED: Also opens field selection
+    private void bookFacility(FacilityDTO facility) {
+        openFieldSelection(facility);
     }
 
     private void openMapActivity() {
         Intent intent = new Intent(HomeActivity.this, com.datn06.pickleconnect.Map.MapActivity.class);
         startActivity(intent);
+        overridePendingTransition(0, 0);
     }
 
     private void openCourtList() {
@@ -379,7 +655,6 @@ public class HomeActivity extends AppCompatActivity {
         if (cancellationTokenSource != null) {
             cancellationTokenSource.cancel();
         }
-        // Đảm bảo dismiss loading dialog khi destroy activity
         if (loadingDialog != null) {
             try {
                 loadingDialog.dismiss();
