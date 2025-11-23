@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Pickle Connect</string>
+    
+    <!-- Gender options -->
+    <string-array name="gender_options">
+        <item>Nam</item>
+        <item>Nữ</item>
+    </string-array>
 </resources>
