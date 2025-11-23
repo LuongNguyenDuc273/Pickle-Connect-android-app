@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="240dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_filter_popup"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sắp xếp theo"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#000000"
+        android:paddingBottom="12dp" />
+
+    <RadioGroup
+        android:id="@+id/radio_group_sort"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/radio_sort_default"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Mặc định"
+            android:textSize="14sp"
+            android:checked="true"
+            android:paddingVertical="8dp" />
+
+        <RadioButton
+            android:id="@+id/radio_sort_rating_high"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Rating cao nhất"
+            android:textSize="14sp"
+            android:paddingVertical="8dp" />
+
+        <RadioButton
+            android:id="@+id/radio_sort_rating_low"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Rating thấp nhất"
+            android:textSize="14sp"
+            android:paddingVertical="8dp" />
+
+        <RadioButton
+            android:id="@+id/radio_sort_distance_near"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Gần nhất"
+            android:textSize="14sp"
+            android:paddingVertical="8dp" />
+
+        <RadioButton
+            android:id="@+id/radio_sort_distance_far"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Xa nhất"
+            android:textSize="14sp"
+            android:paddingVertical="8dp" />
+
+    </RadioGroup>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"
+        android:layout_marginVertical="12dp" />
+
+    <!-- Apply Button -->
+    <Button
+        android:id="@+id/btn_apply_sort"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Áp dụng"
+        android:textSize="14sp"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/bg_button_primary"
+        android:paddingVertical="10dp" />
+
+</LinearLayout>

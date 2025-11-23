@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@android:color/white"
+    android:padding="8dp">
+
+    <Button
+        android:id="@+id/btn_sort"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Sắp xếp"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        android:gravity="start|center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="?attr/selectableItemBackground"
+        style="?android:attr/borderlessButtonStyle" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"
+        android:layout_marginVertical="4dp" />
+
+    <Button
+        android:id="@+id/btn_advanced_filter"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Bộ lọc nâng cao"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        android:gravity="start|center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="?attr/selectableItemBackground"
+        style="?android:attr/borderlessButtonStyle" />
+
+</LinearLayout>
