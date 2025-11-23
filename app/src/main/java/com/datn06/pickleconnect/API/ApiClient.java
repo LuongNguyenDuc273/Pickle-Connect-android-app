@@ -1,9 +1,9 @@
 package com.datn06.pickleconnect.API;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.util.Base64;
 import android.util.Log;
+import com.datn06.pickleconnect.Utils.TokenManager; // ✅ IMPORT TokenManager
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -21,46 +21,53 @@ import java.util.concurrent.TimeUnit;
 
 public class ApiClient {
 
-    // ⚠️ QUAN TRỌNG: Thay đổi URL này theo môi trường
-    // Emulator: Sử dụng ServiceHost enum để quản lý các service
-    // Điện thoại thật: http://192.168.1.XXX:PORT/ (IP máy tính)
-    
-    // Default service: Auth Service (member-command-api) on port 9005
     public static final String BASE_URL = ServiceHost.AUTH_SERVICE.getUrl();
-    
-    // Alternative service URLs (kept for backward compatibility)
     public static final String ALT_BASE_URL = ServiceHost.COURT_SERVICE.getUrl();
 
-    // Lưu nhiều Retrofit instances (key = baseUrl)
     private static final Map<String, Retrofit> retrofitMap = new HashMap<>();
-    private static Retrofit retrofit = null; // giữ for default BASE_URL
+    private static Retrofit retrofit = null;
     private static String authToken = null;
-    private static Context applicationContext = null; // ✅ ADDED: Store application context
+    private static Context applicationContext = null;
+    private static TokenManager tokenManager = null; // ✅ THÊM TokenManager
 
-    // ✅ ADDED: Initialize context (call this in Application class or first Activity)
+    // ✅ Initialize context (call this in Application class or first Activity)
     public static void init(Context context) {
         if (context != null) {
             applicationContext = context.getApplicationContext();
-            // Load token from SharedPreferences if exists
-            loadTokenFromPreferences();
+            tokenManager = TokenManager.getInstance(applicationContext); // ✅ KHỞI TẠO
+            loadTokenFromTokenManager(); // ✅ LOAD TỪ TokenManager
         }
     }
 
-    // ✅ ADDED: Load token from SharedPreferences
-    private static void loadTokenFromPreferences() {
-        if (applicationContext != null) {
-            SharedPreferences prefs = applicationContext.getSharedPreferences("MyApp", Context.MODE_PRIVATE);
-            String savedToken = prefs.getString("token", null);
+    // ✅ THAY ĐỔI: Load token từ TokenManager thay vì SharedPreferences
+    private static void loadTokenFromTokenManager() {
+        if (tokenManager != null) {
+            String savedToken = tokenManager.getToken();
             if (savedToken != null && !savedToken.isEmpty()) {
                 authToken = savedToken;
+                Log.d("ApiClient", "Loaded token from TokenManager");
             }
         }
+    }
+
+    // ✅ THÊM: Method để reload token (gọi sau khi login/logout)
+    public static void reloadToken() {
+        loadTokenFromTokenManager();
+        // Reset all retrofit instances to recreate interceptor with new token
+        retrofit = null;
+        retrofitMap.clear();
     }
 
     // Hàm set token sau khi login
     public static void setAuthToken(String token) {
         authToken = token;
-        // Reset tất cả retrofit instances để interceptor sẽ được tái tạo với token mới
+
+        // ✅ THÊM: Cũng lưu vào TokenManager để đồng bộ
+        if (tokenManager != null) {
+            tokenManager.saveToken(token);
+        }
+
+        // Reset tất cả retrofit instances
         retrofit = null;
         retrofitMap.clear();
     }
@@ -69,13 +76,12 @@ public class ApiClient {
         return getRetrofitInstance(BASE_URL);
     }
 
-    // Trả về Retrofit instance cho baseUrl cụ thể (không ghi đè nếu đã có)
     public static Retrofit getRetrofitInstance(String baseUrl) {
         if (baseUrl == null) baseUrl = BASE_URL;
 
-        // ✅ ADDED: Load token if not loaded yet
-        if (authToken == null && applicationContext != null) {
-            loadTokenFromPreferences();
+        // ✅ THAY ĐỔI: Load token từ TokenManager nếu chưa có
+        if (authToken == null && tokenManager != null) {
+            loadTokenFromTokenManager();
         }
 
         // Nếu yêu cầu instance mặc định
@@ -88,7 +94,7 @@ public class ApiClient {
             return retrofitMap.get(baseUrl);
         }
 
-        // Logging - để xem request/response trong Logcat
+        // Logging
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         logging.setLevel(HttpLoggingInterceptor.Level.BODY);
 
@@ -98,16 +104,24 @@ public class ApiClient {
             public Response intercept(Chain chain) throws IOException {
                 Request.Builder builder = chain.request().newBuilder();
 
-                // Thêm Authorization header và X-Userinfo header nếu có token
-                if (authToken != null && !authToken.isEmpty()) {
+                // ✅ THÊM: Luôn lấy token mới nhất từ TokenManager mỗi lần request
+                String currentToken = authToken;
+                if (tokenManager != null) {
+                    String freshToken = tokenManager.getToken();
+                    if (freshToken != null && !freshToken.isEmpty()) {
+                        currentToken = freshToken;
+                    }
+                }
+
+                if (currentToken != null && !currentToken.isEmpty()) {
                     // 1. Thêm Authorization Bearer token
-                    builder.addHeader("Authorization", "Bearer " + authToken);
-                    
-                    // 2. Parse JWT và tạo X-Userinfo header cho backend port 9008
+                    builder.addHeader("Authorization", "Bearer " + currentToken);
+
+                    // 2. Parse JWT và tạo X-Userinfo header
                     try {
-                        String xUserInfo = generateXUserInfo(authToken);
+                        String xUserInfo = generateXUserInfo(currentToken);
                         builder.addHeader("X-Userinfo", xUserInfo);
-                        Log.d("ApiClient", "Generated X-Userinfo: " + xUserInfo);
+                        Log.d("ApiClient", "Added headers with token");
                     } catch (Exception e) {
                         Log.e("ApiClient", "Failed to generate X-Userinfo: " + e.getMessage());
                         // Fallback: empty JSON
@@ -148,17 +162,21 @@ public class ApiClient {
         return r;
     }
 
+    // ✅ THÊM: Get client (để dùng cho Retrofit.Builder bên ngoài nếu cần)
+    public static Retrofit getClient() {
+        return getRetrofitInstance();
+    }
+
     // Hàm để lấy ApiService
     public static ApiService getApiService() {
         return getRetrofitInstance().create(ApiService.class);
     }
 
-    // Lấy ApiService theo baseUrl (ví dụ gọi port 9008)
     public static ApiService getApiService(String baseUrl) {
         return getRetrofitInstance(baseUrl).create(ApiService.class);
     }
 
-    // Generic helpers: tạo service theo class
+    // Generic helpers
     public static <T> T createService(Class<T> serviceClass) {
         return getRetrofitInstance().create(serviceClass);
     }
@@ -172,38 +190,28 @@ public class ApiClient {
         return getRetrofitInstance(host.getUrl()).create(serviceClass);
     }
 
-    // ✅ ADDED: Parse JWT token and generate X-Userinfo header
+    // Parse JWT token and generate X-Userinfo header
     private static String generateXUserInfo(String jwtToken) throws Exception {
-        // JWT format: header.payload.signature
         String[] parts = jwtToken.split("\\.");
         if (parts.length < 2) {
             throw new Exception("Invalid JWT token format");
         }
 
-        // Decode payload (part[1])
         String payload = new String(Base64.decode(parts[1], Base64.URL_SAFE | Base64.NO_WRAP));
-        
-        // Parse JSON payload
         JSONObject jsonPayload = new JSONObject(payload);
-        
-        // Extract required fields
+
         String preferredUsername = jsonPayload.optString("preferred_username", "");
         String sub = jsonPayload.optString("sub", "");
         String email = jsonPayload.optString("email", "");
-        
-        // Create X-Userinfo JSON
+
         JSONObject xUserInfoJson = new JSONObject();
         xUserInfoJson.put("preferred_username", preferredUsername);
         xUserInfoJson.put("sub", sub);
         xUserInfoJson.put("email", email);
-        
-        // Encode to Base64
+
         String xUserInfoString = xUserInfoJson.toString();
         String encoded = Base64.encodeToString(xUserInfoString.getBytes(), Base64.NO_WRAP);
-        
-        Log.d("ApiClient", "JWT Payload: " + payload);
-        Log.d("ApiClient", "X-Userinfo JSON: " + xUserInfoString);
-        
+
         return encoded;
     }
 }

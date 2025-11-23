@@ -14,29 +14,34 @@ import retrofit2.http.*;
 
 /**
  * Legacy API Service - For backward compatibility
- * 
+ *
  * ⚠️ DEPRECATED: Consider using domain-specific services instead:
  * - AuthApiService for auth/register/login (ServiceHost.AUTH_SERVICE)
- * - CourtApiService for court/booking (ServiceHost.COURT_SERVICE) 
+ * - CourtApiService for court/booking (ServiceHost.COURT_SERVICE)
  * - etc.
- * 
+ *
  * See: SERVICE_HOST_USAGE.txt for examples
  */
 public interface ApiService {
+
+    // =========================================================================
+    //                            AUTHENTICATION APIs
+    // =========================================================================
 
     // ⚠️ DEPRECATED: Use AuthApiService.login() instead
     // Login
     @POST("api-andr/account/login")
     Call<LoginResponse> login(@Body LoginRequest request);
 
-    // Get Profile (cần token)
-//    @GET("auth/profile")
-//    Call<ProfileResponse> getProfile();
-
     // ⚠️ DEPRECATED: Use AuthApiService.register() instead
     // Register
     @POST("api-andr/account/register")
     Call<RegisterResponse> register(@Body RegisterRequest request);
+
+
+    // =========================================================================
+    //                            HOME & SEARCH APIs
+    // =========================================================================
 
     // Home - Still valid for main API service
     @GET("api-andr/home/data")
@@ -53,6 +58,10 @@ public interface ApiService {
             @Query("maxDistanceKm") Double maxDistanceKm,
             @Query("limit") Integer limit
     );
+
+    // =========================================================================
+    //                            EVENT APIs
+    // =========================================================================
 
     // Get Event List
     @GET("api-andr/events/list")

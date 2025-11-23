@@ -18,6 +18,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PickleConnect">
         <activity
+            android:name=".Profile.ProfileActivity"
+            android:exported="false" />
+        <activity
             android:name=".Event.EventDetailActivity"
             android:exported="false" />
         <activity
@@ -28,8 +31,8 @@
             android:exported="false" />
         <activity
             android:name=".Search.SearchedActivity"
-            android:launchMode="singleTask"
-            android:exported="false" />
+            android:exported="false"
+            android:launchMode="singleTask" />
         <activity
             android:name=".Search.SearchActivity"
             android:exported="false" />
@@ -43,11 +46,10 @@
             android:exported="false" />
         <activity
             android:name=".Home.HomeActivity"
-            android:launchMode="singleTask"
-            android:exported="false" />
-<!--        <activity-->
-<!--            android:name=".Login.Login"-->
-<!--            android:exported="false"/>-->
+            android:exported="false"
+            android:launchMode="singleTask" /> <!-- <activity -->
+        <!-- android:name=".Login.Login" -->
+        <!-- android:exported="false"/> -->
         <activity
             android:name=".Register.RegisterActivity"
             android:exported="false" />
@@ -62,16 +64,17 @@
         <activity
             android:name=".PaymentResultActivity"
             android:exported="true"
-            android:launchMode="singleTask"
-            android:label="Kết quả thanh toán">
+            android:label="Kết quả thanh toán"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                
+
                 <data
-                    android:scheme="pickleconnect"
-                    android:host="payment" />
+                    android:host="payment"
+                    android:scheme="pickleconnect" />
             </intent-filter>
         </activity>
         <activity

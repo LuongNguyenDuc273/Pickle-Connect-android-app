@@ -16,6 +16,7 @@ import com.datn06.pickleconnect.Register.RegisterResponse;
 import com.datn06.pickleconnect.Utils.AlertHelper;
 import com.datn06.pickleconnect.Utils.LoadingDialog;
 import com.datn06.pickleconnect.Utils.SharedPrefManager;
+import com.datn06.pickleconnect.Utils.TokenManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import retrofit2.Call;
@@ -86,37 +87,24 @@ public class Login extends AppCompatActivity {
 
                     if ("200".equals(loginResponse.getCode()) || "201".equals(loginResponse.getCode())) {
                         LoginResponse.DataLogin data = loginResponse.getData();
-                        String token = data.getToken();
-                        String refreshToken = data.getRefreshToken();
-                        Long accountId = data.getAccountId();
-                        String fullName = data.getFullName();
-                        String userName = data.getUserName();
-                        String userEmail = data.getEmail();
-                        String phoneNumber = data.getPhoneNumber();
 
-                        // ✅ UPDATED: Save to SharedPrefManager
-                        SharedPrefManager prefManager = SharedPrefManager.getInstance(Login.this);
-                        prefManager.saveUser(
-                            String.valueOf(accountId), // userId = accountId
-                            userName,                   // username
-                            userEmail,                  // email
-                            phoneNumber,                // phone
-                            fullName                    // fullName
+                        // DÙNG TokenManager
+                        TokenManager tokenManager = TokenManager.getInstance(Login.this);
+                        tokenManager.saveLoginData(
+                                data.getToken(),                      // token
+                                data.getRefreshToken(),               // refreshToken
+                                String.valueOf(data.getAccountId()),  // userId
+                                data.getUserName(),                   // username
+                                data.getFullName(),                   // fullName
+                                data.getEmail(),                      // email
+                                data.getPhoneNumber()                 // phoneNumber ✅ THÊM
                         );
-                        prefManager.saveTokens(token, refreshToken);
 
-                        // Also save to "MyApp" SharedPreferences for backward compatibility
-                        SharedPreferences prefs = getSharedPreferences("MyApp", MODE_PRIVATE);
-                        prefs.edit()
-                                .putString("token", token)
-                                .putString("refreshToken", refreshToken)
-                                .putLong("accountId", accountId)
-                                .putString("fullName", fullName)
-                                .apply();
+                        //Set token cho ApiClient (để Interceptor tự động thêm vào header)
+                        ApiClient.setAuthToken(data.getToken());
 
-                        ApiClient.setAuthToken(token);
-
-                        AlertHelper.showSuccess(Login.this, "Đăng nhập thành công! Xin chào " + fullName);
+                        AlertHelper.showSuccess(Login.this,
+                                "Đăng nhập thành công! Xin chào " + data.getFullName());
 
                         new android.os.Handler().postDelayed(() -> {
                             Intent intent = new Intent(Login.this, HomeActivity.class);
