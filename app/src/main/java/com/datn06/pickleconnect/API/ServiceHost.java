@@ -16,7 +16,10 @@ public enum ServiceHost {
 
     // Main API Service (port 9003) - if still needed
     API_SERVICE("http://10.0.2.2:9003/", "API Service (9003)"),
-
+    
+    // Transaction Service - Booking History (port 9009)
+    TXN_SERVICE("http://10.0.2.2:9020/", "Transaction Service (9020)"),
+    
     // Payment Service (port 9010) - if available
     PAYMENT_SERVICE("http://10.0.2.2:9010/", "Payment Service (9010)");
 
