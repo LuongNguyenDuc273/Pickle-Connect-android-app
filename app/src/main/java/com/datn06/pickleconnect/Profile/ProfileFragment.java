@@ -61,9 +61,12 @@ public class ProfileFragment extends Fragment {
     private CircleImageView profileImageEdit;
     private CardView editProfileImage;
     private TextInputEditText etFullName;
+    private TextInputEditText etEmail;
     private TextInputEditText etPhone;
     private TextInputEditText etDateOfBirth;
     private AutoCompleteTextView spinnerGender;
+    private TextInputEditText etWeight;
+    private TextInputEditText etHeight;
     private Button btnConfirm;
 
     private TokenManager tokenManager;
@@ -73,7 +76,7 @@ public class ProfileFragment extends Fragment {
     // Date formatters
     private SimpleDateFormat displayFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
     private SimpleDateFormat apiFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-    private SimpleDateFormat apiFormatWithDash = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()); // API actual format
+    private SimpleDateFormat apiFormatWithDash = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
     private SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
 
     // Image picker launcher
@@ -102,9 +105,6 @@ public class ProfileFragment extends Fragment {
         return view;
     }
 
-    /**
-     * Setup image picker activity result launcher
-     */
     private void setupImagePicker() {
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -123,9 +123,12 @@ public class ProfileFragment extends Fragment {
         profileImageEdit = view.findViewById(R.id.profileImageEdit);
         editProfileImage = view.findViewById(R.id.editProfileImage);
         etFullName = view.findViewById(R.id.etFullName);
+        etEmail = view.findViewById(R.id.etEmail);
         etPhone = view.findViewById(R.id.etPhone);
         etDateOfBirth = view.findViewById(R.id.etDateOfBirth);
         spinnerGender = view.findViewById(R.id.spinnerGender);
+        etWeight = view.findViewById(R.id.etWeight);
+        etHeight = view.findViewById(R.id.etHeight);
         btnConfirm = view.findViewById(R.id.btnConfirm);
     }
 
@@ -162,7 +165,6 @@ public class ProfileFragment extends Fragment {
             DatePickerDialog datePickerDialog = new DatePickerDialog(
                     requireContext(),
                     (view, selectedYear, selectedMonth, selectedDay) -> {
-                        // Display format dd/MM/yyyy
                         String dateDisplay = String.format(Locale.getDefault(), "%02d/%02d/%04d",
                                 selectedDay, selectedMonth + 1, selectedYear);
                         etDateOfBirth.setText(dateDisplay);
@@ -187,26 +189,18 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    /**
-     * Open image picker from gallery
-     */
     private void openImagePicker() {
         Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setType("image/*");
         imagePickerLauncher.launch(intent);
     }
 
-    /**
-     * Handle selected image from gallery
-     */
     private void handleSelectedImage(Uri imageUri) {
         try {
-            // Show preview using Glide
             Glide.with(this)
                     .load(imageUri)
                     .into(profileImageEdit);
 
-            // Upload to S3
             uploadImageToS3(imageUri);
 
         } catch (Exception e) {
@@ -215,15 +209,10 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    /**
-     * Upload image to S3 storage via Member Service (port 9002)
-     * Member Service will handle Base64 conversion and call S3 API (port 9023)
-     */
     private void uploadImageToS3(Uri imageUri) {
         loadingDialog.show();
 
         try {
-            // Get file from URI
             InputStream inputStream = requireContext().getContentResolver().openInputStream(imageUri);
             if (inputStream == null) {
                 loadingDialog.dismiss();
@@ -231,38 +220,31 @@ public class ProfileFragment extends Fragment {
                 return;
             }
 
-            // Convert to byte array
             byte[] imageBytes = getBytes(inputStream);
             inputStream.close();
 
-            // Compress image if needed (max 1MB recommended for Base64)
             Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            
-            // Compress to JPEG with quality adjustment
+
             int quality = 90;
             bitmap.compress(Bitmap.CompressFormat.JPEG, quality, baos);
-            
-            // Further compress if still too large
+
             while (baos.toByteArray().length > 1024 * 1024 && quality > 20) {
                 baos.reset();
                 quality -= 10;
                 bitmap.compress(Bitmap.CompressFormat.JPEG, quality, baos);
             }
-            
+
             byte[] compressedBytes = baos.toByteArray();
 
-            // Get MIME type
             String mimeType = requireContext().getContentResolver().getType(imageUri);
             if (mimeType == null) {
                 mimeType = "image/jpeg";
             }
 
-            // Convert to Base64 with data URI format
             String base64String = Base64.encodeToString(compressedBytes, Base64.NO_WRAP);
             String base64WithPrefix = "data:" + mimeType + ";base64," + base64String;
 
-            // Create request parameters
             String userId = tokenManager.getUserId();
             String requestId = "IMG_" + System.currentTimeMillis();
             String requestTime = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault())
@@ -275,7 +257,6 @@ public class ProfileFragment extends Fragment {
             request.setRequestTime(requestTime);
             request.setSubFolder("avatars");
 
-            // Call Member Service upload-avatar API (port 9002)
             memberApiService.uploadAvatar(request).enqueue(new Callback<UploadImageResponse>() {
                 @Override
                 public void onResponse(Call<UploadImageResponse> call,
@@ -291,7 +272,6 @@ public class ProfileFragment extends Fragment {
                             Toast.makeText(requireContext(),
                                     "Cập nhật ảnh đại diện thành công", Toast.LENGTH_SHORT).show();
 
-                            // Reload profile to show new avatar
                             loadProfileDataFromApi();
                         } else {
                             Toast.makeText(requireContext(),
@@ -326,9 +306,6 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    /**
-     * Convert InputStream to byte array
-     */
     private byte[] getBytes(InputStream inputStream) throws IOException {
         ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
         int bufferSize = 1024;
@@ -342,9 +319,6 @@ public class ProfileFragment extends Fragment {
         return byteBuffer.toByteArray();
     }
 
-    /**
-     * Get file name from URI
-     */
     private String getFileName(Uri uri) {
         String fileName = null;
         Cursor cursor = requireContext().getContentResolver().query(
@@ -402,6 +376,8 @@ public class ProfileFragment extends Fragment {
                         MemberInfoResponse data = baseResponse.getData();
                         Log.d("ProfileFragment", "DOB from API: " + data.getDateOfBirth());
                         Log.d("ProfileFragment", "Gender from API: " + data.getGender());
+                        Log.d("ProfileFragment", "Weight from API: " + data.getWeightKg());
+                        Log.d("ProfileFragment", "Height from API: " + data.getHeightCm());
                         populateFields(data);
                     } else {
                         Toast.makeText(requireContext(),
@@ -430,33 +406,26 @@ public class ProfileFragment extends Fragment {
         if (data != null) {
 
             if (data.getAvatarUrl() != null && !data.getAvatarUrl().isEmpty()) {
-                // Convert localhost MinIO URL to public ngrok URL
                 String imageUrl = data.getAvatarUrl();
 
-                // Replace localhost:9000 with ngrok URL
-                // Lấy URL từ: docker logs ngrok-minio
                 if (imageUrl.contains("localhost:9000")) {
                     imageUrl = imageUrl.replace("http://localhost:9000", "https://soren-painted-erosely.ngrok-free.dev");
                 }
-                // Backup: nếu URL trả về đã có domain khác, giữ nguyên
                 else if (!imageUrl.startsWith("https://") && !imageUrl.startsWith("http://")) {
-                    // URL không hợp lệ, thêm prefix
                     imageUrl = "https://soren-painted-erosely.ngrok-free.dev" + imageUrl;
                 }
 
                 Log.d("ProfileFragment", "Loading avatar from: " + imageUrl);
 
-                // Check if Fragment is still attached
                 if (isAdded() && getContext() != null && profileImageEdit != null) {
-                    // Clear old image first
                     profileImageEdit.setImageDrawable(null);
-                    
+
                     Log.d("ProfileFragment", "🔄 Starting Glide load...");
-                    
+
                     Glide.with(requireContext())
                             .load(imageUrl)
-                            .skipMemoryCache(true) // Force skip cache
-                            .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.NONE) // No disk cache
+                            .skipMemoryCache(true)
+                            .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.NONE)
                             .placeholder(R.drawable.ic_launcher_foreground)
                             .error(R.drawable.ic_launcher_foreground)
                             .listener(new com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable>() {
@@ -471,14 +440,13 @@ public class ProfileFragment extends Fragment {
                                 public boolean onResourceReady(android.graphics.drawable.Drawable resource, Object model, com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, com.bumptech.glide.load.DataSource dataSource, boolean isFirstResource) {
                                     Log.d("ProfileFragment", "✅ Glide load success from: " + dataSource);
                                     Log.d("ProfileFragment", "📦 Resource size: " + resource.getIntrinsicWidth() + "x" + resource.getIntrinsicHeight());
-                                    
-                                    // Force view update
+
                                     profileImageEdit.post(() -> {
                                         profileImageEdit.invalidate();
                                         profileImageEdit.requestLayout();
                                         Log.d("ProfileFragment", "🔄 View invalidated and layout requested");
                                     });
-                                    
+
                                     return false;
                                 }
                             })
@@ -487,33 +455,43 @@ public class ProfileFragment extends Fragment {
                     Log.e("ProfileFragment", "❌ Cannot load image - Fragment not attached or view is null");
                 }
             }
+
             // Set full name
             if (etFullName != null && data.getFullName() != null) {
                 etFullName.setText(data.getFullName());
             }
 
-            // Set phone number
-            if (etPhone != null && data.getPhoneNumber() != null) {
-                etPhone.setText(data.getPhoneNumber());
+            // Set email (Read-only)
+            if (etEmail != null) {
+                if (data.getEmail() != null && !data.getEmail().isEmpty()) {
+                    etEmail.setText(data.getEmail());
+                } else {
+                    etEmail.setText("Chưa có dữ liệu");
+                }
             }
 
-            // Set date of birth - handle multiple formats
+            // Set phone number (Read-only)
+            if (etPhone != null) {
+                if (data.getPhoneNumber() != null && !data.getPhoneNumber().isEmpty()) {
+                    etPhone.setText(data.getPhoneNumber());
+                } else {
+                    etPhone.setText("Chưa có dữ liệu");
+                }
+            }
+
+            // Set date of birth
             if (etDateOfBirth != null && data.getDateOfBirth() != null && !data.getDateOfBirth().isEmpty()) {
                 String dobString = data.getDateOfBirth();
                 Date date = null;
 
-                // Try parsing with different formats
-                // 1. Try dd-MM-yyyy (API returns this format: "27-10-2003")
                 try {
                     date = apiFormatWithDash.parse(dobString);
                     Log.d("ProfileFragment", "✅ Parsed with dd-MM-yyyy");
                 } catch (ParseException e) {
-                    // 2. Try yyyy-MM-dd HH:mm:ss.SSS (database format)
                     try {
                         date = dbFormat.parse(dobString);
                         Log.d("ProfileFragment", "✅ Parsed with yyyy-MM-dd HH:mm:ss.SSS");
                     } catch (ParseException e2) {
-                        // 3. Try yyyy-MM-dd (simple date)
                         try {
                             date = apiFormat.parse(dobString);
                             Log.d("ProfileFragment", "✅ Parsed with yyyy-MM-dd");
@@ -523,7 +501,6 @@ public class ProfileFragment extends Fragment {
                     }
                 }
 
-                // Display the parsed date
                 if (date != null) {
                     String displayDate = displayFormat.format(date);
                     etDateOfBirth.setText(displayDate);
@@ -533,28 +510,52 @@ public class ProfileFragment extends Fragment {
                 }
             }
 
-            // Handle gender as Integer or String
+            // Set gender
             if (spinnerGender != null && data.getGender() != null) {
                 String genderDisplay = convertGenderToDisplay(data.getGender());
                 spinnerGender.setText(genderDisplay, false);
+            }
+
+            // Set weight (Cân nặng) - from weightKg field
+            if (etWeight != null) {
+                Log.d("ProfileFragment", "WeightKg value: '" + data.getWeightKg() + "'");
+                if (data.getWeightKg() != null && !data.getWeightKg().isEmpty() && !data.getWeightKg().equals("0") && !data.getWeightKg().equals("0.0")) {
+                    etWeight.setText(data.getWeightKg());
+                    Log.d("ProfileFragment", "✅ Set weight: " + data.getWeightKg());
+                } else {
+                    etWeight.setHint("Chưa có dữ liệu");
+                    etWeight.setText("");
+                    Log.d("ProfileFragment", "⚠️ Weight is null/empty/0, showing placeholder");
+                }
+            }
+
+            // Set height (Chiều cao) - from heightCm field
+            if (etHeight != null) {
+                Log.d("ProfileFragment", "HeightCm value: '" + data.getHeightCm() + "'");
+                if (data.getHeightCm() != null && !data.getHeightCm().isEmpty() && !data.getHeightCm().equals("0") && !data.getHeightCm().equals("0.0")) {
+                    etHeight.setText(data.getHeightCm());
+                    Log.d("ProfileFragment", "✅ Set height: " + data.getHeightCm());
+                } else {
+                    etHeight.setHint("Chưa có dữ liệu");
+                    etHeight.setText("");
+                    Log.d("ProfileFragment", "⚠️ Height is null/empty/0, showing placeholder");
+                }
             }
         }
     }
 
     private String convertGenderToDisplay(String gender) {
-        // Check if gender is numeric (1, 0, 2)
         try {
             int genderInt = Integer.parseInt(gender);
             switch (genderInt) {
                 case 1:
-                    return "Nam";   // API: 1 = Nam
+                    return "Nam";
                 case 0:
-                    return "Nữ";    // API: 0 = Nữ
+                    return "Nữ";
                 default:
-                    return "Khác";  // API: 2 = Khác
+                    return "Khác";
             }
         } catch (NumberFormatException e) {
-            // If not numeric, treat as string (MALE, FEMALE, OTHER)
             switch (gender.toUpperCase()) {
                 case "MALE":
                     return "Nam";
@@ -569,32 +570,33 @@ public class ProfileFragment extends Fragment {
     private String convertGenderToApi(String displayGender) {
         switch (displayGender) {
             case "Nam":
-                return "1";  // API: 1 = Nam
+                return "1";
             case "Nữ":
-                return "0";  // API: 0 = Nữ (NOT 2!)
+                return "0";
             default:
-                return "2";  // API: 2 = Khác (fallback)
+                return "2";
         }
     }
 
     private void updateProfileToApi() {
         String fullName = etFullName.getText().toString().trim();
-        String phone = etPhone.getText().toString().trim();
         String dateOfBirthDisplay = etDateOfBirth.getText().toString().trim();
         String genderDisplay = spinnerGender.getText().toString().trim();
+        String weightStr = etWeight.getText().toString().trim();
+        String heightStr = etHeight.getText().toString().trim();
+        String imgurl = "test";
 
         Log.d("ProfileFragment", "=== UPDATE START ===");
         Log.d("ProfileFragment", "Display date: " + dateOfBirthDisplay);
+        Log.d("ProfileFragment", "Weight input: " + weightStr);
+        Log.d("ProfileFragment", "Height input: " + heightStr);
 
-        // Convert date from dd/MM/yyyy (display) to dd-MM-yyyy (API format)
         String dateOfBirthApi = "";
         if (!dateOfBirthDisplay.isEmpty()) {
-            // Simple conversion: replace "/" with "-"
             dateOfBirthApi = dateOfBirthDisplay.replace("/", "-");
             Log.d("ProfileFragment", "Date conversion: " + dateOfBirthDisplay + " -> " + dateOfBirthApi);
         }
 
-        // Convert gender to API format
         String gender = convertGenderToApi(genderDisplay);
 
         Log.d("ProfileFragment", "Final API date: " + dateOfBirthApi);
@@ -611,6 +613,29 @@ public class ProfileFragment extends Fragment {
         }
         request.setGender(gender);
 
+        // Add weight and height as Double to update request
+        if (!weightStr.isEmpty()) {
+            try {
+                Double weight = Double.parseDouble(weightStr);
+                request.setWeightKg(weight);
+                Log.d("ProfileFragment", "Weight to API: " + weight);
+            } catch (NumberFormatException e) {
+                Log.e("ProfileFragment", "Invalid weight format: " + weightStr);
+            }
+        }
+
+        if (!heightStr.isEmpty()) {
+            try {
+                Double height = Double.parseDouble(heightStr);
+                request.setHeightCm(height);
+                Log.d("ProfileFragment", "Height to API: " + height);
+            } catch (NumberFormatException e) {
+                Log.e("ProfileFragment", "Invalid height format: " + heightStr);
+            }
+        }
+
+        request.setAvatarUrl(imgurl);
+
         Log.d("ProfileFragment", "Updating - userId: " + userId + ", gender: " + gender + ", dob: " + dateOfBirthApi);
 
         memberApiService.updateMember(request).enqueue(new Callback<BaseResponse<UpdateMemberResponse>>() {
@@ -623,15 +648,20 @@ public class ProfileFragment extends Fragment {
                     BaseResponse<UpdateMemberResponse> baseResponse = response.body();
 
                     if ("00".equals(baseResponse.getCode())) {
+                        // Update TokenManager if needed
                         tokenManager.saveUserInfo(
                                 userId,
                                 tokenManager.getUsername(),
                                 fullName,
                                 tokenManager.getEmail(),
-                                phone
+                                tokenManager.getPhoneNumber()
                         );
 
                         AlertHelper.showSuccess(requireActivity(), "Cập nhật thành công");
+
+                        // Show updated values immediately (don't wait for API reload)
+                        // since API might not return heightCm/weightKg yet
+                        Log.d("ProfileFragment", "✅ Update successful - keeping current values");
 
                         new android.os.Handler().postDelayed(() -> {
                             loadProfileDataFromApi();
@@ -663,7 +693,6 @@ public class ProfileFragment extends Fragment {
 
     private boolean validateInputs() {
         String fullName = etFullName.getText().toString().trim();
-        String phone = etPhone.getText().toString().trim();
 
         if (fullName.isEmpty()) {
             etFullName.setError("Vui lòng nhập họ và tên");
@@ -677,22 +706,38 @@ public class ProfileFragment extends Fragment {
             return false;
         }
 
-        if (phone.isEmpty()) {
-            etPhone.setError("Vui lòng nhập số điện thoại");
-            etPhone.requestFocus();
-            return false;
+        // Validate weight if provided
+        String weightStr = etWeight.getText().toString().trim();
+        if (!weightStr.isEmpty()) {
+            try {
+                double weight = Double.parseDouble(weightStr);
+                if (weight <= 0 || weight > 500) {
+                    etWeight.setError("Cân nặng không hợp lệ (1-500 kg)");
+                    etWeight.requestFocus();
+                    return false;
+                }
+            } catch (NumberFormatException e) {
+                etWeight.setError("Cân nặng phải là số");
+                etWeight.requestFocus();
+                return false;
+            }
         }
 
-        if (phone.length() < 10) {
-            etPhone.setError("Số điện thoại không hợp lệ (ít nhất 10 số)");
-            etPhone.requestFocus();
-            return false;
-        }
-
-        if (!phone.matches("\\d+")) {
-            etPhone.setError("Số điện thoại chỉ được chứa chữ số");
-            etPhone.requestFocus();
-            return false;
+        // Validate height if provided
+        String heightStr = etHeight.getText().toString().trim();
+        if (!heightStr.isEmpty()) {
+            try {
+                double height = Double.parseDouble(heightStr);
+                if (height <= 0 || height > 300) {
+                    etHeight.setError("Chiều cao không hợp lệ (1-300 cm)");
+                    etHeight.requestFocus();
+                    return false;
+                }
+            } catch (NumberFormatException e) {
+                etHeight.setError("Chiều cao phải là số");
+                etHeight.requestFocus();
+                return false;
+            }
         }
 
         return true;
@@ -708,7 +753,6 @@ public class ProfileFragment extends Fragment {
         if (etDateOfBirth != null && dob != null && !dob.isEmpty()) {
             Date date = null;
 
-            // Try parsing with different formats
             try {
                 date = apiFormatWithDash.parse(dob);
             } catch (ParseException e) {

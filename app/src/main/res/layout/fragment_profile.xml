@@ -41,14 +41,6 @@
                     android:elevation="2dp" />
 
                 <!-- Profile Image -->
-<!--                <de.hdodenhof.circleimageview.CircleImageView-->
-<!--                    android:id="@+id/profileImageEdit"-->
-<!--                    android:layout_width="100dp"-->
-<!--                    android:layout_height="100dp"-->
-<!--                    android:layout_gravity="center"-->
-<!--                    android:src="@drawable/avartar_placeholder"-->
-<!--                    app:civ_border_color="#E0E0E0"-->
-<!--                    app:civ_border_width="2dp" />-->
                 <de.hdodenhof.circleimageview.CircleImageView
                     android:id="@+id/profileImageEdit"
                     android:layout_width="90dp"
@@ -113,7 +105,43 @@
                 android:padding="12dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Điện thoại -->
+        <!-- Email (Read-only) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Email"
+            android:textColor="#212121"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="#BDBDBD"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textColor="#757575"
+                android:textColorHint="#9E9E9E"
+                android:inputType="textEmailAddress"
+                android:padding="12dp"
+                android:focusable="false"
+                android:clickable="false"
+                android:enabled="false"
+                android:background="@android:color/transparent" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Điện thoại (Read-only) -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -128,7 +156,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
             app:boxBackgroundMode="outline"
-            app:boxStrokeColor="#00A896"
+            app:boxStrokeColor="#BDBDBD"
             app:boxCornerRadiusTopStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
@@ -139,10 +167,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="15sp"
-                android:textColor="#212121"
+                android:textColor="#757575"
                 android:textColorHint="#9E9E9E"
                 android:inputType="phone"
-                android:padding="12dp" />
+                android:padding="12dp"
+                android:focusable="false"
+                android:clickable="false"
+                android:enabled="false"
+                android:background="@android:color/transparent" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Ngày sinh -->
@@ -195,7 +227,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
+            android:layout_marginBottom="20dp"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             app:boxStrokeColor="#00A896"
             app:boxCornerRadiusTopStart="12dp"
@@ -211,6 +243,70 @@
                 android:textColor="#212121"
                 android:textColorHint="#9E9E9E"
                 android:inputType="none"
+                android:padding="12dp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Cân nặng -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cân nặng (kg)"
+            android:textColor="#212121"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="#00A896"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etWeight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textColor="#212121"
+                android:textColorHint="#9E9E9E"
+                android:inputType="numberDecimal"
+                android:padding="12dp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Chiều cao -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chiều cao (cm)"
+            android:textColor="#212121"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="#00A896"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etHeight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textColor="#212121"
+                android:textColorHint="#9E9E9E"
+                android:inputType="numberDecimal"
                 android:padding="12dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
