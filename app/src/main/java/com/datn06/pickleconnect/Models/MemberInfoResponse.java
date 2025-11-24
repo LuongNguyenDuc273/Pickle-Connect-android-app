@@ -1,5 +1,7 @@
 package com.datn06.pickleconnect.Models;
 
+import com.google.gson.annotations.SerializedName;
+
 public class MemberInfoResponse {
     private String userId;
     private String username;
@@ -13,7 +15,10 @@ public class MemberInfoResponse {
     private String province;
     private String district;
     private String address;
+    
+    @SerializedName("userImageUrl")
     private String avatarUrl;
+    
     private Boolean isFirstLogin;
 
     // Getters and Setters

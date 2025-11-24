@@ -6,7 +6,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
 import com.datn06.pickleconnect.Profile.BookingHistoryFragment;
-import com.datn06.pickleconnect.Profile.ProfileFragment;
+import com.datn06.pickleconnect.Profile.MediaLibraryFragment;
 
 public class ProfilePagerAdapter extends FragmentStateAdapter {
 
@@ -19,9 +19,9 @@ public class ProfilePagerAdapter extends FragmentStateAdapter {
     public Fragment createFragment(int position) {
         switch (position) {
             case 0:
-                return new BookingHistoryFragment();
+                return new BookingHistoryFragment(); // Tab "Lịch sử đặt sân"
             case 1:
-               return new ProfileFragment();
+                return new MediaLibraryFragment(); // Tab "Thư viện" (ảnh/video)
             default:
                 return new BookingHistoryFragment();
         }

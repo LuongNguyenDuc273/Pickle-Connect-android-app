@@ -3,11 +3,13 @@ package com.datn06.pickleconnect.API;
 
 import com.datn06.pickleconnect.Common.BaseRequest;
 import com.datn06.pickleconnect.Common.BaseResponse;
+import com.datn06.pickleconnect.Models.Base64UploadRequest;
 import com.datn06.pickleconnect.Models.MemberInfoRequest;
 import com.datn06.pickleconnect.Models.MemberInfoResponse;
 import com.datn06.pickleconnect.Models.UpdateMemberRequest;
 import com.datn06.pickleconnect.Models.UpdateMemberRequest;
 import com.datn06.pickleconnect.Models.UpdateMemberResponse;
+import com.datn06.pickleconnect.Models.UploadImageResponse;
 
 import retrofit2.Call;
 import retrofit2.http.*;
@@ -40,5 +42,17 @@ public interface MemberApiService {
     @POST("/user-profile/update")
     Call<BaseResponse<UpdateMemberResponse>> updateMember(
             @Body UpdateMemberRequest request
+    );
+
+    /**
+     * Upload avatar image (Base64)
+     * Member Service will handle conversion and upload to S3
+     *
+     * @param request Base64UploadRequest containing imageData, userId, requestId, requestTime, subFolder
+     * @return Upload response with file URL
+     */
+    @POST("/user-profile/upload-avatar")
+    Call<UploadImageResponse> uploadAvatar(
+            @Body Base64UploadRequest request
     );
 }

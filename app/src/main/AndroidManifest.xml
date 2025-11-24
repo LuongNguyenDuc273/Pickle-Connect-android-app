@@ -3,9 +3,16 @@
     xmlns:tools="http://schemas.android.com/tools">
     <!-- Quyền Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- Quyền GPS -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    
+    <!-- Quyền GPS -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    
+    <!-- Quyền đọc ảnh từ storage -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" 
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
         android:allowBackup="true"
@@ -21,14 +28,17 @@
             android:name=".Profile.ProfileActivity"
             android:exported="false" />
         <activity
+            android:name=".Profile.ProfileEditActivity"
+            android:exported="false" />
+        <activity
             android:name=".Event.EventDetailActivity"
             android:exported="false" />
         <activity
             android:name=".Event.EventsActivity"
             android:exported="false" />
-        <activity
-            android:name=".Facility.FacilityDetailActivity"
-            android:exported="false" />
+<!--        <activity-->
+<!--            android:name=".Facility.FacilityDetailActivity"-->
+<!--            android:exported="false" />-->
         <activity
             android:name=".Search.SearchedActivity"
             android:exported="false"

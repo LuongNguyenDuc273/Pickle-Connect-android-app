@@ -1,6 +1,7 @@
 package com.datn06.pickleconnect.Models;
 
 import com.datn06.pickleconnect.Common.BaseRequest;
+import com.google.gson.annotations.SerializedName;
 
 public class UpdateMemberRequest extends BaseRequest {
     private String userId;
@@ -12,6 +13,9 @@ public class UpdateMemberRequest extends BaseRequest {
     private String province;
     private String district;
     private String address;
+    
+    @SerializedName("userImageUrl")
+    private String avatarUrl;
 
     public UpdateMemberRequest(String userId) {
         this.userId = userId;
@@ -37,4 +41,6 @@ public class UpdateMemberRequest extends BaseRequest {
     public void setDistrict(String district) { this.district = district; }
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
 }

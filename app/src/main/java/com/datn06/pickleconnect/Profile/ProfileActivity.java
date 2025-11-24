@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.bumptech.glide.Glide;
 import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.API.MemberApiService;
 import com.datn06.pickleconnect.API.ServiceHost;
@@ -98,7 +99,7 @@ public class ProfileActivity extends AppCompatActivity {
                             tab.setText("Lịch sử đặt sân");
                             break;
                         case 1:
-                            tab.setText("Hồ sơ");
+                            tab.setText("Thư viện");
                             break;
                     }
                 }).attach();
@@ -106,9 +107,13 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void setupListeners() {
         logoutButton.setOnClickListener(v -> handleLogout());
+        
+        // Edit badge - mở ProfileEditActivity (Activity riêng)
         editBadge.setOnClickListener(v -> {
-            Toast.makeText(this, "Chỉnh sửa ảnh đại diện", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(ProfileActivity.this, ProfileEditActivity.class);
+            startActivity(intent);
         });
+        
         ivCopyId.setOnClickListener(v -> copyIdToClipboard());
         userId.setOnClickListener(v -> copyIdToClipboard());
     }
@@ -232,6 +237,31 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void updateUIWithProfileData(MemberInfoResponse data) {
         if (data != null) {
+            // Load avatar image using Glide
+            if (data.getAvatarUrl() != null && !data.getAvatarUrl().isEmpty()) {
+                // Convert localhost MinIO URL to public ngrok URL
+                String imageUrl = data.getAvatarUrl();
+                
+                // Replace localhost:9000 with ngrok URL
+                // Lấy URL từ: docker logs ngrok-minio
+                if (imageUrl.contains("localhost:9000")) {
+                    imageUrl = imageUrl.replace("http://localhost:9000", "https://soren-painted-erosely.ngrok-free.dev");
+                }
+                // Backup: nếu URL trả về đã có domain khác, giữ nguyên
+                else if (!imageUrl.startsWith("https://") && !imageUrl.startsWith("http://")) {
+                    // URL không hợp lệ, thêm prefix
+                    imageUrl = "https://soren-painted-erosely.ngrok-free.dev" + imageUrl;
+                }
+                
+                Log.d("ProfileActivity", "Loading avatar from: " + imageUrl);
+                
+                Glide.with(this)
+                        .load(imageUrl)
+                        .placeholder(R.drawable.ic_launcher_foreground)
+                        .error(R.drawable.ic_launcher_foreground)
+                        .into(profileImage);
+            }
+
             // Update name
             String fullName = data.getFullName() != null ? data.getFullName().toUpperCase() : "USER";
             userName.setText(fullName);
