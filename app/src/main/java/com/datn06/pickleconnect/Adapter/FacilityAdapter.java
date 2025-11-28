@@ -27,8 +27,8 @@ public class FacilityAdapter extends RecyclerView.Adapter<FacilityAdapter.Facili
 
     // Interface for click listeners
     public interface OnFacilityClickListener {
-        void onFacilityClick(FacilityDTO facility);
-        void onBookClick(FacilityDTO facility);
+        void onFacilityClick(FacilityDTO facility);  // Click vào card (không phải nút)
+        void onBookClick(FacilityDTO facility);      // Click vào nút "ĐẶT SÂN"
     }
 
     public FacilityAdapter(Context context) {
@@ -71,22 +71,15 @@ public class FacilityAdapter extends RecyclerView.Adapter<FacilityAdapter.Facili
         holder.tvVenueAddress.setText(facility.getFullAddress());
         holder.tvVenuePhone.setText("SĐT: " + facility.getContactInfo());
 
-        // Click listeners
+        // ✅ FIXED: Click vào CARD (không phải nút) -> gọi onFacilityClick
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onFacilityClick(facility);
             }
         });
 
+        // ✅ FIXED: Click vào NÚT "ĐẶT SÂN" -> gọi onBookClick
         holder.btnBookVenue.setOnClickListener(v -> {
-            // Navigate to FieldSelectionActivity with facilityId
-            Intent intent = new Intent(context, FieldSelectionActivity.class);
-            intent.putExtra("facilityId", facility.getFacilityId());
-            intent.putExtra("facilityName", facility.getFacilityName());
-            // bookDate sẽ được lấy là ngày hiện tại trong FieldSelectionActivity
-            context.startActivity(intent);
-            
-            // Gọi callback nếu có (để HomeActivity biết)
             if (listener != null) {
                 listener.onBookClick(facility);
             }

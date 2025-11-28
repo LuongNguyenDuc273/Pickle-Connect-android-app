@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Pickle Connect</string>
+    <string name="court_image">Court Image</string>
 </resources>
