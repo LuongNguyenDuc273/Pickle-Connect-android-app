@@ -1,5 +1,6 @@
 package com.datn06.pickleconnect.Booking;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.datn06.pickleconnect.Event.EventDetailActivity;
 import com.datn06.pickleconnect.Model.SelectedSlotDTO;
 import com.datn06.pickleconnect.Model.TimeSlotDTO;
 import com.datn06.pickleconnect.R;
@@ -168,11 +170,17 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             TextView tvTimeRange = slotView.findViewById(R.id.tvTimeRange);
             TextView tvPrice = slotView.findViewById(R.id.tvPrice);
             
+            // ✅ EVENT VIEWS
+            View layoutEventInfo = slotView.findViewById(R.id.layoutEventInfo);
+            TextView tvEventName = slotView.findViewById(R.id.tvEventName);
+            TextView tvParticipants = slotView.findViewById(R.id.tvParticipants);
+            TextView tvEventPrice = slotView.findViewById(R.id.tvEventPrice);
+            
             // Set time label
             tvTimeRange.setText(slot.getSlotLabel());
             
-            // Set price
-            tvPrice.setText(slot.getFormattedPrice());
+            // Check if this is an EVENT slot
+            boolean isEvent = slot.getEventId() != null && slot.getEventName() != null;
             
             // Check if selected
             boolean isSelected = selectedSlots.stream()
@@ -182,24 +190,60 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             int bgColor;
             boolean isClickable;
             
-            if (!slot.getIsAvailable()) {
-                // Booked - Gray
+            if (isEvent) {
+                // ✅ EVENT SLOT - Màu hồng (Pink)
+                bgColor = Color.parseColor("#FF4081");  // Material Pink
+                isClickable = true;  // Event có thể click để xem detail
+                tvTimeRange.setTextColor(Color.WHITE);
+                
+                // Ẩn tvPrice, hiển thị layoutEventInfo
+                tvPrice.setVisibility(View.GONE);
+                layoutEventInfo.setVisibility(View.VISIBLE);
+                
+                // Set event info
+                tvEventName.setText(slot.getEventName());
+                tvParticipants.setText(slot.getCurrentParticipants() + "/" + slot.getMaxParticipants());
+                
+                // Giá event từ ticketPrice (không phải fixedPrice của slot)
+                if (slot.getTicketPrice() != null && slot.getTicketPrice().intValue() > 0) {
+                    long price = slot.getTicketPrice().longValue();
+                    tvEventPrice.setText((price / 1000) + "k");
+                } else {
+                    tvEventPrice.setText("Miễn phí");
+                }
+                
+            } else if (!slot.getIsAvailable()) {
+                // BOOKED - Gray
                 bgColor = Color.parseColor("#E0E0E0");
                 isClickable = false;
                 tvTimeRange.setTextColor(Color.parseColor("#757575"));
+                
+                tvPrice.setVisibility(View.VISIBLE);
+                tvPrice.setText(slot.getFormattedPrice());
                 tvPrice.setTextColor(Color.parseColor("#757575"));
+                layoutEventInfo.setVisibility(View.GONE);
+                
             } else if (isSelected) {
-                // Selected - Green
+                // SELECTED - Green
                 bgColor = Color.parseColor("#4CAF50");
                 isClickable = true;
                 tvTimeRange.setTextColor(Color.WHITE);
+                
+                tvPrice.setVisibility(View.VISIBLE);
+                tvPrice.setText(slot.getFormattedPrice());
                 tvPrice.setTextColor(Color.WHITE);
+                layoutEventInfo.setVisibility(View.GONE);
+                
             } else {
-                // Available - Cyan
+                // AVAILABLE - Cyan
                 bgColor = Color.parseColor("#00BCD4");
                 isClickable = true;
                 tvTimeRange.setTextColor(Color.WHITE);
+                
+                tvPrice.setVisibility(View.VISIBLE);
+                tvPrice.setText(slot.getFormattedPrice());
                 tvPrice.setTextColor(Color.WHITE);
+                layoutEventInfo.setVisibility(View.GONE);
             }
             
             cardSlot.setCardBackgroundColor(bgColor);
@@ -207,9 +251,20 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             
             // Click handler
             if (isClickable && listener != null) {
-                cardSlot.setOnClickListener(v -> {
-                    listener.onSlotClick(slot, !isSelected);
-                });
+                if (isEvent) {
+                    // ✅ Event slot → Navigate to EventDetailActivity
+                    cardSlot.setOnClickListener(v -> {
+                        Intent intent = new Intent(v.getContext(), EventDetailActivity.class);
+                        intent.putExtra("eventId", slot.getEventId());
+                        intent.putExtra("eventName", slot.getEventName());
+                        v.getContext().startActivity(intent);
+                    });
+                } else {
+                    // Regular slot → Select/Deselect
+                    cardSlot.setOnClickListener(v -> {
+                        listener.onSlotClick(slot, !isSelected);
+                    });
+                }
             }
         }
     }

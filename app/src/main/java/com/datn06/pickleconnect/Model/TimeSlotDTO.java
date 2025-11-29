@@ -32,6 +32,22 @@ public class TimeSlotDTO {
     @SerializedName("isAvailable")
     private Boolean isAvailable;
     
+    // ✅ EVENT FIELDS - Thông tin sự kiện (nếu slot này là event)
+    @SerializedName("eventId")
+    private Long eventId;
+    
+    @SerializedName("eventName")
+    private String eventName;
+    
+    @SerializedName("currentParticipants")
+    private Integer currentParticipants;
+    
+    @SerializedName("maxParticipants")
+    private Integer maxParticipants;
+    
+    @SerializedName("ticketPrice")
+    private BigDecimal ticketPrice;  // Event ticket price
+    
     // Constructor
     public TimeSlotDTO() {}
     
@@ -111,6 +127,47 @@ public class TimeSlotDTO {
     
     public void setIsAvailable(Boolean isAvailable) {
         this.isAvailable = isAvailable;
+    }
+    
+    // ✅ EVENT GETTERS & SETTERS
+    public Long getEventId() {
+        return eventId;
+    }
+    
+    public void setEventId(Long eventId) {
+        this.eventId = eventId;
+    }
+    
+    public String getEventName() {
+        return eventName;
+    }
+    
+    public void setEventName(String eventName) {
+        this.eventName = eventName;
+    }
+    
+    public Integer getCurrentParticipants() {
+        return currentParticipants;
+    }
+    
+    public void setCurrentParticipants(Integer currentParticipants) {
+        this.currentParticipants = currentParticipants;
+    }
+    
+    public Integer getMaxParticipants() {
+        return maxParticipants;
+    }
+    
+    public void setMaxParticipants(Integer maxParticipants) {
+        this.maxParticipants = maxParticipants;
+    }
+    
+    public BigDecimal getTicketPrice() {
+        return ticketPrice;
+    }
+    
+    public void setTicketPrice(BigDecimal ticketPrice) {
+        this.ticketPrice = ticketPrice;
     }
     
     // Helper methods
@@ -194,6 +251,27 @@ public class TimeSlotDTO {
         // Implementation depends on current time comparison
         // For now, return false (backend should handle this)
         return false;
+    }
+    
+    /**
+     * Create a copy of this TimeSlotDTO for merging event slots
+     */
+    public TimeSlotDTO copy() {
+        TimeSlotDTO copy = new TimeSlotDTO();
+        copy.slotId = this.slotId;
+        copy.startTime = this.startTime;
+        copy.endTime = this.endTime;
+        copy.slotLabel = this.slotLabel;
+        copy.slotStatus = this.slotStatus;
+        copy.fixedPrice = this.fixedPrice;
+        copy.walkinPrice = this.walkinPrice;
+        copy.isAvailable = this.isAvailable;
+        copy.eventId = this.eventId;
+        copy.eventName = this.eventName;
+        copy.currentParticipants = this.currentParticipants;
+        copy.maxParticipants = this.maxParticipants;
+        copy.ticketPrice = this.ticketPrice;
+        return copy;
     }
     
     @Override

@@ -1,5 +1,7 @@
 package com.datn06.pickleconnect.Event;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,8 +15,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.API.ApiService;
 import com.datn06.pickleconnect.API.ServiceHost;
+import com.datn06.pickleconnect.Common.BaseResponse;
 import com.datn06.pickleconnect.Model.EventDetailDTO;
+import com.datn06.pickleconnect.Model.EventRegistrationRequest;
+import com.datn06.pickleconnect.Model.EventRegistrationResponse;
 import com.datn06.pickleconnect.R;
+import com.datn06.pickleconnect.Utils.TokenManager;
+import com.datn06.pickleconnect.Utils.XUserInfoHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.textfield.TextInputEditText;
@@ -31,6 +38,9 @@ public class EventDetailActivity extends AppCompatActivity {
 
     // ✅ ADDED: API Service field
     private ApiService apiService;
+    
+    // User authentication
+    private TokenManager tokenManager;
 
     // Header
     private ImageView btnBack;
@@ -88,12 +98,21 @@ public class EventDetailActivity extends AppCompatActivity {
     // ✅ ADDED: Initialize API Service with correct port
     private void initApiService() {
         apiService = ApiClient.createService(ServiceHost.API_SERVICE, ApiService.class);
+        tokenManager = TokenManager.getInstance(this);
         Log.d(TAG, "API Service initialized for port 9003 (EventDetail)");
     }
 
     private void getEventIdFromIntent() {
         if (getIntent() != null) {
-            eventId = getIntent().getStringExtra("eventId");
+            // Nhận eventId dưới dạng Long hoặc String
+            if (getIntent().hasExtra("eventId")) {
+                Object eventIdObj = getIntent().getExtras().get("eventId");
+                if (eventIdObj instanceof Long) {
+                    eventId = String.valueOf(eventIdObj);
+                } else if (eventIdObj instanceof String) {
+                    eventId = (String) eventIdObj;
+                }
+            }
             Log.d(TAG, "Received eventId: " + eventId);
         }
     }
@@ -351,16 +370,153 @@ public class EventDetailActivity extends AppCompatActivity {
     }
 
     private void registerEvent() {
+        // Validate user logged in
+        if (!tokenManager.isLoggedIn()) {
+            Toast.makeText(this, "Vui lòng đăng nhập để đăng ký sự kiện", Toast.LENGTH_SHORT).show();
+            // TODO: Navigate to login screen
+            return;
+        }
+
+
+        // Get user info
+        String userId = tokenManager.getUserId();
+        String userName = tokenManager.getUsername();
+        String fullName = tokenManager.getFullName();
+        String userEmail = tokenManager.getEmail();
+        String phoneNumber = tokenManager.getPhoneNumber();
+
+        // Log for debugging
+        Log.d(TAG, "User info - userId: " + userId + ", userName: " + userName + ", fullName: " + fullName + ", email: " + userEmail + ", phone: " + phoneNumber);
+
+        // Validate required fields
+        if (userId == null || userEmail == null || phoneNumber == null) {
+            Toast.makeText(this, "Thiếu thông tin người dùng. Vui lòng cập nhật profile", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Get note
         String note = etNote.getText() != null ? etNote.getText().toString().trim() : "";
 
-        // TODO: Implement event registration API call
-        Toast.makeText(this,
-                "Đăng ký " + quantity + " vé cho sự kiện: " + currentEvent.getEventName(),
-                Toast.LENGTH_LONG).show();
+        // ✅ Use fullName if available, fallback to userName, then "User"
+        String displayName = fullName != null && !fullName.isEmpty() ? fullName : 
+                           userName != null && !userName.isEmpty() ? userName : "User";
 
-        Log.d(TAG, "Register event - EventId: " + eventId + ", Quantity: " + quantity + ", Note: " + note);
+        // ✅ Calculate total amount
+        BigDecimal totalPrice = currentEvent.getTicketPrice()
+                .multiply(BigDecimal.valueOf(quantity));
 
-        // Sau khi đăng ký thành công:
-        // finish();
+        // Build request
+        EventRegistrationRequest request = EventRegistrationRequest.builder()
+                .eventId(eventId)
+                .userId(Long.parseLong(userId))
+                .userName(displayName)
+                .userEmail(userEmail)
+                .phoneNumber(phoneNumber)
+                .quantity(quantity)
+                .notes(note)
+                .paymentMethodCode("VNPPGW")
+                .orderDescription(String.format("Đăng ký sự kiện %s - %d vé", 
+                        currentEvent.getEventName(), quantity))
+                // ✅ ADDED: New fields for booking creation
+                .totalAmount(totalPrice.toString()) // Convert BigDecimal to String
+                .totalHours(0) // Event doesn't use hours
+                .bookingDate(currentEvent.getEventDate()) // Event date (yyyy-MM-dd format)
+                .facilityId(currentEvent.getFacility().getFacilityId().toString())
+                .build();
+
+        Log.d(TAG, "Registering event: " + request.toString());
+
+        // Disable button while processing
+        btnBookNow.setEnabled(false);
+        btnBookNow.setText("Đang xử lý...");
+
+        // Generate X-Userinfo header (Base64-encoded JSON)
+//        String xUserinfo = XUserInfoHelper.generateXUserInfo(userName, userId, userEmail);
+//        Log.d(TAG, "X-Userinfo: " + xUserinfo);
+
+        // Call API
+        Call<BaseResponse<EventRegistrationResponse>> call = apiService.registerEvent(request);
+        
+        call.enqueue(new Callback<BaseResponse<EventRegistrationResponse>>() {
+            @Override
+            public void onResponse(Call<BaseResponse<EventRegistrationResponse>> call,
+                                 Response<BaseResponse<EventRegistrationResponse>> response) {
+                btnBookNow.setEnabled(true);
+                btnBookNow.setText("Đặt ngay");
+
+                if (response.isSuccessful() && response.body() != null) {
+                    BaseResponse<EventRegistrationResponse> baseResponse = response.body();
+
+                    if (baseResponse.isSuccess()) {
+                        EventRegistrationResponse registrationData = baseResponse.getData();
+                        
+                        if (registrationData != null && registrationData.hasPaymentUrl()) {
+                            Log.d(TAG, "Registration successful: " + registrationData.toString());
+                            
+                            // Open VNPay payment URL
+                            openPaymentUrl(registrationData.getPaymentUrl());
+                        } else {
+                            Toast.makeText(EventDetailActivity.this,
+                                    "Lỗi: Không nhận được URL thanh toán",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        // Handle error codes from backend
+                        String errorMsg = baseResponse.getMessage();
+                        if (errorMsg == null || errorMsg.isEmpty()) {
+                            errorMsg = baseResponse.getErrorMessage();
+                        }
+                        Toast.makeText(EventDetailActivity.this,
+                                errorMsg,
+                                Toast.LENGTH_LONG).show();
+                        
+                        Log.e(TAG, "Registration failed: " + baseResponse.toString());
+                    }
+                } else {
+                    Log.e(TAG, "Response not successful: " + response.code());
+                    Toast.makeText(EventDetailActivity.this,
+                            "Lỗi: Không thể đăng ký sự kiện (Code: " + response.code() + ")",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<BaseResponse<EventRegistrationResponse>> call, Throwable t) {
+                btnBookNow.setEnabled(true);
+                btnBookNow.setText("Đặt ngay");
+                
+                Log.e(TAG, "API call failed", t);
+                Toast.makeText(EventDetailActivity.this,
+                        "Lỗi kết nối: " + t.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    /**
+     * Open VNPay payment URL in browser
+     */
+    private void openPaymentUrl(String paymentUrl) {
+        if (paymentUrl == null || paymentUrl.isEmpty()) {
+            Toast.makeText(this, "Lỗi: Không nhận được URL thanh toán", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            Log.d(TAG, "Opening payment URL: " + paymentUrl);
+            
+            // Open VNPay payment URL in browser
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(paymentUrl));
+            startActivity(browserIntent);
+
+            // Show success message
+            Toast.makeText(this, "Đang chuyển đến trang thanh toán VNPay...", Toast.LENGTH_LONG).show();
+
+            // Finish activity để khi quay lại sẽ không bị duplicate
+            finish();
+        } catch (Exception e) {
+            Log.e(TAG, "Error opening payment URL", e);
+            Toast.makeText(this, "Lỗi mở trang thanh toán: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 }

@@ -22,6 +22,7 @@ import com.datn06.pickleconnect.API.ServiceHost;
 import com.datn06.pickleconnect.Adapter.BookingHistoryAdapter;
 import com.datn06.pickleconnect.Model.BookingHistoryDTO;
 import com.datn06.pickleconnect.R;
+import com.datn06.pickleconnect.Utils.TokenManager;
 import com.google.android.material.tabs.TabLayout;
 
 import java.text.SimpleDateFormat;
@@ -56,6 +57,7 @@ public class BookingHistoryActivity extends AppCompatActivity {
     private Calendar fromCalendar, toCalendar;
     private SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
     private SimpleDateFormat apiDateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+    private TokenManager tokenManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,10 +71,11 @@ public class BookingHistoryActivity extends AppCompatActivity {
         setupDatePickers();
         setupListeners();
 
-        // Set default date range (last 30 days)
+        // ✅ Load ALL bookings - no date filter (10 years past to 1 year future)
         toCalendar = Calendar.getInstance();
+        toCalendar.add(Calendar.YEAR, 1);
         fromCalendar = Calendar.getInstance();
-        fromCalendar.add(Calendar.DAY_OF_MONTH, -30);
+        fromCalendar.add(Calendar.YEAR, -10);
 
         updateDateFields();
         loadBookingHistory();
@@ -91,15 +94,32 @@ public class BookingHistoryActivity extends AppCompatActivity {
     }
 
     private void getUserId() {
-        SharedPreferences prefs = getSharedPreferences("MyApp", MODE_PRIVATE);
-        userId = prefs.getLong("accountId", -1L);
-        
-        if (userId == -1L) {
-            Log.e(TAG, "User not logged in - accountId not found");
+        tokenManager = TokenManager.getInstance(this);
+
+        if (!tokenManager.isLoggedIn()) {
+            Log.e(TAG, "User not logged in");
+            Toast.makeText(this, "Vui lòng đăng nhập lại", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        String userIdStr = tokenManager.getUserId();
+        if (userIdStr != null && !userIdStr.isEmpty()) {
+            try {
+                userId = Long.parseLong(userIdStr);
+                Log.d(TAG, "User ID loaded: " + userId);
+            } catch (NumberFormatException e) {
+                Log.e(TAG, "Invalid userId format: " + userIdStr, e);
+                Toast.makeText(this, "Lỗi thông tin người dùng", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        } else {
+            Log.e(TAG, "User ID is null or empty");
             Toast.makeText(this, "Vui lòng đăng nhập lại", Toast.LENGTH_SHORT).show();
             finish();
         }
     }
+
 
     private void setupRecyclerView() {
         adapter = new BookingHistoryAdapter(this);
@@ -108,15 +128,15 @@ public class BookingHistoryActivity extends AppCompatActivity {
             @Override
             public void onDetailClick(BookingHistoryDTO booking) {
                 // TODO: Open booking detail or rating screen
-                Toast.makeText(BookingHistoryActivity.this, 
-                    "Đánh giá: " + booking.getBookingCode(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(BookingHistoryActivity.this,
+                        "Đánh giá: " + booking.getBookingCode(), Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onRebookClick(BookingHistoryDTO booking) {
                 // TODO: Navigate to booking screen with pre-filled data
-                Toast.makeText(BookingHistoryActivity.this, 
-                    "Tái phiếu: " + booking.getBookingCode(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(BookingHistoryActivity.this,
+                        "Tái phiếu: " + booking.getBookingCode(), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -143,10 +163,12 @@ public class BookingHistoryActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
 
             @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
         });
     }
 
@@ -157,28 +179,29 @@ public class BookingHistoryActivity extends AppCompatActivity {
 
     private void setupListeners() {
         ivBack.setOnClickListener(v -> finish());
-        
+
+        // ✅ Disable filter button - no filtering by date
         ivFilter.setOnClickListener(v -> {
-            loadBookingHistory();
+            Toast.makeText(this, "Đang hiển thị tất cả lịch sử", Toast.LENGTH_SHORT).show();
         });
     }
 
     private void showDatePicker(boolean isFromDate) {
         Calendar calendar = isFromDate ? fromCalendar : toCalendar;
-        
+
         DatePickerDialog dialog = new DatePickerDialog(
-            this,
-            (view, year, month, dayOfMonth) -> {
-                calendar.set(Calendar.YEAR, year);
-                calendar.set(Calendar.MONTH, month);
-                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                updateDateFields();
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
+                this,
+                (view, year, month, dayOfMonth) -> {
+                    calendar.set(Calendar.YEAR, year);
+                    calendar.set(Calendar.MONTH, month);
+                    calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                    updateDateFields();
+                },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
         );
-        
+
         dialog.show();
     }
 
@@ -196,18 +219,18 @@ public class BookingHistoryActivity extends AppCompatActivity {
         String toDate = apiDateFormatter.format(toCalendar.getTime());
 
         BookingHistoryRequest request = new BookingHistoryRequest(
-            userId,
-            currentStatus,
-            fromDate,
-            toDate
+                userId,
+                currentStatus,
+                fromDate,
+                toDate
         );
 
-        Log.d(TAG, "Loading booking history: userId=" + userId + ", status=" + currentStatus + 
-              ", from=" + fromDate + ", to=" + toDate);
+        Log.d(TAG, "Loading booking history: userId=" + userId + ", status=" + currentStatus +
+                ", from=" + fromDate + ", to=" + toDate);
 
         BookingApiService apiService = ApiClient.createService(
-            ServiceHost.TXN_SERVICE, 
-            BookingApiService.class
+                ServiceHost.TXN_SERVICE,
+                BookingApiService.class
         );
 
         apiService.getBookingHistory(request).enqueue(new Callback<List<BookingHistoryDTO>>() {
@@ -217,20 +240,21 @@ public class BookingHistoryActivity extends AppCompatActivity {
 
                 if (response.isSuccessful() && response.body() != null) {
                     List<BookingHistoryDTO> bookings = response.body();
-                    
+
                     if (bookings.isEmpty()) {
                         showEmptyState();
                     } else {
                         allBookings = bookings;
+                        // ✅ Backend already sorted by newest first (ORDER BY booking_date DESC)
                         adapter.setBookingList(allBookings);
                         rvBookingHistory.setVisibility(View.VISIBLE);
-                        Log.d(TAG, "Loaded " + bookings.size() + " bookings");
+                        Log.d(TAG, "Loaded " + bookings.size() + " bookings (sorted newest first)");
                     }
                 } else {
                     Log.e(TAG, "Response not successful: " + response.code());
                     showEmptyState();
-                    Toast.makeText(BookingHistoryActivity.this, 
-                        "Không thể tải lịch sử đặt sân", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(BookingHistoryActivity.this,
+                            "Không thể tải lịch sử đặt sân", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -239,8 +263,8 @@ public class BookingHistoryActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
                 showEmptyState();
                 Log.e(TAG, "API call failed", t);
-                Toast.makeText(BookingHistoryActivity.this, 
-                    "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(BookingHistoryActivity.this,
+                        "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

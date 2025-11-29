@@ -16,6 +16,7 @@ import com.datn06.pickleconnect.Register.RegisterResponse;
 import com.datn06.pickleconnect.Utils.AlertHelper;
 import com.datn06.pickleconnect.Utils.LoadingDialog;
 import com.datn06.pickleconnect.Utils.SharedPrefManager;
+import com.datn06.pickleconnect.Utils.TokenManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import retrofit2.Call;
@@ -94,25 +95,33 @@ public class Login extends AppCompatActivity {
                         String userEmail = data.getEmail();
                         String phoneNumber = data.getPhoneNumber();
 
-                        // ✅ UPDATED: Save to SharedPrefManager
+
+                        // ✅ SAVE TO BOTH TokenManager AND SharedPrefManager
+                        TokenManager tokenManager = TokenManager.getInstance(Login.this);
+                        tokenManager.saveLoginData(
+                                data.getToken(),                      // token
+                                data.getRefreshToken(),               // refreshToken
+                                String.valueOf(data.getAccountId()),  // userId
+                                data.getUserName(),                   // username
+                                data.getFullName(),                   // fullName
+                                data.getEmail(),                      // email
+                                data.getPhoneNumber()                 // phoneNumber
+                        );
+                        tokenManager.saveToken(data.getToken());
+
+
+                        // ✅ ALSO save to SharedPrefManager (for BookingConfirmActivity)
                         SharedPrefManager prefManager = SharedPrefManager.getInstance(Login.this);
                         prefManager.saveUser(
-                            String.valueOf(accountId), // userId = accountId
-                            userName,                   // username
-                            userEmail,                  // email
-                            phoneNumber,                // phone
-                            fullName                    // fullName
+                                String.valueOf(data.getAccountId()),  // userId
+                                data.getUserName(),                   // username
+                                data.getEmail(),                      // email
+                                data.getPhoneNumber(),                // phone
+                                data.getFullName()                    // fullName
                         );
-                        prefManager.saveTokens(token, refreshToken);
+                        prefManager.saveTokens(data.getToken(), data.getRefreshToken());
 
-                        // Also save to "MyApp" SharedPreferences for backward compatibility
-                        SharedPreferences prefs = getSharedPreferences("MyApp", MODE_PRIVATE);
-                        prefs.edit()
-                                .putString("token", token)
-                                .putString("refreshToken", refreshToken)
-                                .putLong("accountId", accountId)
-                                .putString("fullName", fullName)
-                                .apply();
+                        //Set token cho ApiClient (để Interceptor tự động thêm vào header)
 
                         ApiClient.setAuthToken(token);
 
