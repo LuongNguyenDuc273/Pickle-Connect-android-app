@@ -28,7 +28,7 @@ public interface MemberApiService {
      * @param request Request containing userId, email, phoneNumber
      * @return Member info including profile and certificates
      */
-    @POST("/user-profile/member-info")
+    @POST("api-andr/member-info")
     Call<BaseResponse<MemberInfoResponse>> getMemberInfo(
             @Body MemberInfoRequest request
     );
@@ -39,7 +39,7 @@ public interface MemberApiService {
      * @param request Request containing userId and updated fields
      * @return Update confirmation response
      */
-    @POST("/user-profile/update")
+    @POST("api-andr/update")
     Call<BaseResponse<UpdateMemberResponse>> updateMember(
             @Body UpdateMemberRequest request
     );
@@ -51,7 +51,7 @@ public interface MemberApiService {
      * @param request Base64UploadRequest containing imageData, userId, requestId, requestTime, subFolder
      * @return Upload response with file URL
      */
-    @POST("/user-profile/upload-avatar")
+    @POST("api-andr/upload-avatar")
     Call<UploadImageResponse> uploadAvatar(
             @Body Base64UploadRequest request
     );

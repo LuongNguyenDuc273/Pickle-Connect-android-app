@@ -11,6 +11,11 @@
         android:title="Đặt sân" />
 
     <item
+        android:id="@+id/nav_tournaments"
+        android:icon="@drawable/ic_trophy"
+        android:title="Giải đấu"/>
+
+    <item
         android:id="@+id/nav_account"
         android:icon="@drawable/ic_account"
         android:title="Tài khoản" />
