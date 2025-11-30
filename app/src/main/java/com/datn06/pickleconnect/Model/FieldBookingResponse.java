@@ -134,6 +134,7 @@ public class FieldBookingResponse {
     /**
      * Get all time slots from a specific field grouped by time period
      * Returns Map: "Sáng" -> [slots], "Chiều" -> [slots], "Tối" -> [slots]
+     * Event slots spanning multiple time slots are merged into a single display slot
      */
     public Map<String, List<TimeSlotDTO>> getSlotsByPeriod(int fieldIndex) {
         FieldAvailabilityDTO field = getFieldByIndex(fieldIndex);
@@ -142,17 +143,82 @@ public class FieldBookingResponse {
             return new LinkedHashMap<>();
         }
         
+        // First, merge consecutive event slots
+        List<TimeSlotDTO> mergedSlots = mergeEventSlots(field.getTimeSlots());
+        
         Map<String, List<TimeSlotDTO>> grouped = new LinkedHashMap<>();
         grouped.put("Sáng", new ArrayList<>());
         grouped.put("Chiều", new ArrayList<>());
         grouped.put("Tối", new ArrayList<>());
         
-        for (TimeSlotDTO slot : field.getTimeSlots()) {
+        for (TimeSlotDTO slot : mergedSlots) {
             String period = slot.getTimePeriod();
             grouped.get(period).add(slot);
         }
         
         return grouped;
+    }
+    
+    /**
+     * Merge consecutive slots of the same event into a single display slot
+     * Example: Event from 12:00-14:30 spanning 3 slots → 1 merged slot (12:00-14:30)
+     */
+    private List<TimeSlotDTO> mergeEventSlots(List<TimeSlotDTO> slots) {
+        if (slots == null || slots.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        List<TimeSlotDTO> result = new ArrayList<>();
+        TimeSlotDTO currentMerged = null;
+        
+        for (TimeSlotDTO slot : slots) {
+            // Check if this slot is an event
+            boolean isEvent = slot.getEventId() != null;
+            
+            if (!isEvent) {
+                // Not an event - add previous merged slot if exists, then add this regular slot
+                if (currentMerged != null) {
+                    result.add(currentMerged);
+                    currentMerged = null;
+                }
+                result.add(slot);
+            } else {
+                // This is an event slot
+                if (currentMerged == null) {
+                    // Start new merged slot
+                    currentMerged = slot.copy(); // Create a copy to modify
+                } else if (currentMerged.getEventId() != null && 
+                           currentMerged.getEventId().equals(slot.getEventId())) {
+                    // Same event - extend the end time
+                    currentMerged.setEndTime(slot.getEndTime());
+                    currentMerged.setSlotLabel(formatTimeRange(currentMerged.getStartTime(), slot.getEndTime()));
+                } else {
+                    // Different event - add previous merged slot and start new one
+                    result.add(currentMerged);
+                    currentMerged = slot.copy();
+                }
+            }
+        }
+        
+        // Add last merged slot if exists
+        if (currentMerged != null) {
+            result.add(currentMerged);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Format time range for display (e.g., "12:00 - 14:30")
+     */
+    private String formatTimeRange(String startTime, String endTime) {
+        if (startTime == null || endTime == null) {
+            return "";
+        }
+        // Extract HH:MM from "HH:MM:SS" or "HH:MM"
+        String start = startTime.length() > 5 ? startTime.substring(0, 5) : startTime;
+        String end = endTime.length() > 5 ? endTime.substring(0, 5) : endTime;
+        return start + " - " + end;
     }
     
     /**

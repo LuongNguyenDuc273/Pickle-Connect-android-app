@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardSlot"
     android:layout_width="0dp"
-    android:layout_height="70dp"
+    android:layout_height="wrap_content"
+    android:minHeight="70dp"
     android:layout_weight="1"
     android:layout_margin="4dp"
     app:cardCornerRadius="8dp"
@@ -13,11 +14,12 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
         android:padding="8dp">
 
+        <!-- Thời gian slot -->
         <TextView
             android:id="@+id/tvTimeRange"
             android:layout_width="wrap_content"
@@ -29,6 +31,7 @@
             android:maxLines="1"
             android:ellipsize="end" />
 
+        <!-- Giá hoặc thông tin event -->
         <TextView
             android:id="@+id/tvPrice"
             android:layout_width="wrap_content"
@@ -36,7 +39,61 @@
             android:text="80k"
             android:textSize="11sp"
             android:textColor="@android:color/white"
-            android:layout_marginTop="4dp" />
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <!-- ✅ THÔNG TIN EVENT (ẩn mặc định) -->
+        <LinearLayout
+            android:id="@+id/layoutEventInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginTop="4dp"
+            android:visibility="gone">
+
+            <!-- Tên sự kiện -->
+            <TextView
+                android:id="@+id/tvEventName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Giải Pickleball"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <!-- Số người đăng ký -->
+            <TextView
+                android:id="@+id/tvParticipants"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="5/30"
+                android:textSize="10sp"
+                android:textColor="@android:color/white"
+                android:layout_marginTop="2dp"
+                android:drawablePadding="4dp"
+                android:drawableTint="@android:color/white"
+                android:gravity="center" />
+
+            <!-- Giá vé event -->
+            <TextView
+                android:id="@+id/tvEventPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Miễn phí"
+                android:textSize="10sp"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:layout_marginTop="2dp"
+                android:gravity="center" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

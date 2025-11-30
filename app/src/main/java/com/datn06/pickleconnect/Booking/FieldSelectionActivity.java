@@ -24,8 +24,7 @@ import com.datn06.pickleconnect.Model.FieldBookingResponse;
 import com.datn06.pickleconnect.Model.SelectedSlotDTO;
 import com.datn06.pickleconnect.Model.TimeSlotDTO;
 import com.datn06.pickleconnect.R;
-import com.datn06.pickleconnect.Utils.SharedPrefManager;
-import com.datn06.pickleconnect.Utils.XUserInfoHelper;
+import com.datn06.pickleconnect.Utils.TokenManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.gson.Gson;
@@ -169,14 +168,11 @@ public class FieldSelectionActivity extends AppCompatActivity {
     private void loadFieldAvailability() {
         showLoading(true);
         
-        // Get user info from SharedPreferences
-        SharedPrefManager prefManager = SharedPrefManager.getInstance(this);
-        
-        // ✅ REMOVED: X-Userinfo header - ApiClient interceptor auto-adds this from JWT token
-        // String xUserInfo = XUserInfoHelper.generateXUserInfoFromPrefs(prefManager);
+        // Get user info from TokenManager (Login lưu vào TokenManager)
+        TokenManager tokenManager = TokenManager.getInstance(this);
         
         // Get userId for query parameter
-        String userId = prefManager.getUserId();
+        String userId = tokenManager.getUserId();
         
         String dateStr = formatDateForApi(selectedDate);  // "2025-11-17"
         

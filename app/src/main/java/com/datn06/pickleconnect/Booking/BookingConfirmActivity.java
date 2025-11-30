@@ -243,12 +243,14 @@ public class BookingConfirmActivity extends AppCompatActivity {
         SharedPrefManager prefManager = SharedPrefManager.getInstance(this);
         
         String fullName = prefManager.getFullName();
+        String username = prefManager.getUsername();
         String userEmail = prefManager.getEmail();
         String userPhone = prefManager.getPhone();
         
-        if (fullName != null && !fullName.isEmpty()) {
-            tvUserName.setText(fullName);
-        }
+        // ✅ Use fullName if available, fallback to username
+        String displayName = fullName != null && !fullName.isEmpty() ? fullName : 
+                           username != null && !username.isEmpty() ? username : "User";
+        tvUserName.setText(displayName);
         
         if (userEmail != null && !userEmail.isEmpty()) {
             etEmail.setText(userEmail);

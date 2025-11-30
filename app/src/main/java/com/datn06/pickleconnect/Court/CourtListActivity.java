@@ -99,11 +99,9 @@ public class CourtListActivity extends AppCompatActivity {
 
             @Override
             public void onBookNowClick(FacilityDTO facility) {
-                // Navigate to booking
-                // TODO: Open BookingActivity
-                Toast.makeText(CourtListActivity.this, "Đặt ngay: " + facility.getFacilityName(), Toast.LENGTH_SHORT).show();
+                // This callback is no longer used - CourtAdapter handles it directly
             }
-        });
+        }, this);  // ← Thêm context (this)
         
         rvCourts.setLayoutManager(new LinearLayoutManager(this));
         rvCourts.setAdapter(courtAdapter);

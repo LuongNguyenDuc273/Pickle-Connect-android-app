@@ -1,245 +1,230 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5"
-    android:fitsSystemWindows="false">
+    android:background="#F5F5F5">
 
-    <!-- Header Section with Green Gradient -->
-    <View
-        android:id="@+id/headerBackground"
-        android:layout_width="0dp"
-        android:layout_height="240dp"
+    <!-- AppBar với gradient xanh -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:background="@drawable/bg_gradient_green"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:fitsSystemWindows="true">
 
-    <!-- Profile Image with White Circle Background -->
-    <FrameLayout
-        android:id="@+id/profileImageFrame"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="60dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/collapsingToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="280dp"
+            app:contentScrim="@drawable/bg_gradient_green"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            app:toolbarId="@+id/toolbar">
 
-        <!-- White Circle Background -->
-        <View
-            android:layout_width="98dp"
-            android:layout_height="98dp"
-            android:background="@drawable/circle_white_bg" />
+            <!-- Profile Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingTop="60dp"
+                android:paddingBottom="20dp"
+                app:layout_collapseMode="parallax">
 
-        <!-- Profile Image -->
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/profileImage"
-            android:layout_width="90dp"
-            android:layout_height="90dp"
-            android:layout_gravity="center"
-            android:src="@drawable/avartar_placeholder"
-            app:civ_border_color="#FFFFFF"
-            app:civ_border_width="0dp" />
+                <!-- Avatar với button edit -->
+                <FrameLayout
+                    android:layout_width="120dp"
+                    android:layout_height="120dp">
 
-        <!-- Edit Badge -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/editBadge"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_gravity="bottom|end"
-            android:layout_marginEnd="0dp"
-            android:layout_marginBottom="0dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="#FFFFFF">
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/ivProfileAvatar"
+                        android:layout_width="120dp"
+                        android:layout_height="120dp"
+                        android:src="@drawable/avartar_placeholder"
+                        app:civ_border_color="#FFFFFF"
+                        app:civ_border_width="3dp" />
 
-            <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_edit"
-                android:contentDescription="Chỉnh sửa ảnh"
-                app:tint="#00A896" />
-        </androidx.cardview.widget.CardView>
-    </FrameLayout>
+                    <!-- Edit Icon -->
+                    <ImageView
+                        android:id="@+id/ivEditAvatar"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_gravity="bottom|end"
+                        android:background="@drawable/bg_circle_white"
+                        android:elevation="4dp"
+                        android:padding="6dp"
+                        android:src="@drawable/ic_edit"
+                        app:tint="#4CAF50" />
+                </FrameLayout>
 
-    <!-- User Name -->
-    <TextView
-        android:id="@+id/userName"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="20dp"
-        android:text="ĐẶN HUYỀN HUY"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:letterSpacing="0.02"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/profileImageFrame"
-        app:layout_constraintTop_toTopOf="@id/profileImageFrame" />
+                <!-- User Name -->
 
-    <!-- Logout Button with Red Background -->
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/logoutButton"
-        style="@style/LogoutButtonStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="36dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="12dp"
-        android:paddingStart="18dp"
-        android:paddingEnd="18dp"
-        android:text="Đăng xuất"
-        app:layout_constraintStart_toEndOf="@id/profileImageFrame"
-        app:layout_constraintTop_toBottomOf="@id/userName" />
+                <!-- Bio -->
+                <TextView
+                    android:id="@+id/tvProfileName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:textColor="#FFFFFF"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    tools:text="Do Thuy Duong" />
 
-    <!-- Gender and ID Section - Below Avatar on Left -->
-    <LinearLayout
-        android:id="@+id/userInfoLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="16dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/profileImageFrame">
+                <TextView
+                    android:id="@+id/tvProfileBio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="#E0FFFFFF"
+                    android:textSize="14sp"
+                    tools:text="Thích Pickleball" />
 
-        <ImageView
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:src="@drawable/ic_male"
-            app:tint="#FFFFFF" />
+                <!-- Gender, Location, ID -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/userGender"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="Nam"
-            android:textColor="#FFFFFF"
-            android:textSize="17sp"
-            android:textStyle="bold" />
+                    <!-- Gender -->
+                    <ImageView
+                        android:id="@+id/ivGenderIcon"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_male"
+                        app:tint="#FFFFFF" />
 
-        <View
-            android:layout_width="2dp"
-            android:layout_height="16dp"
-            android:layout_gravity="center_vertical"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="12dp"
-            android:background="#FFFFFF"
-            android:alpha="0.7"/>
+                    <TextView
+                        android:id="@+id/tvGender"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        tools:text="Nam" />
 
-        <TextView
-            android:id="@+id/userId"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ID:1234567"
-            android:textColor="#FFFFFF"
-            android:textSize="17sp"
-            android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:text="•"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp" />
 
-        <ImageView
-            android:id="@+id/ivCopyId"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_marginStart="8dp"
-            android:src="@drawable/ic_copy"
-            android:clickable="true"
-            android:focusable="true"
-            android:contentDescription="Sao chép ID"
-            app:tint="#FFFFFF" />
-    </LinearLayout>
+                    <!-- Location -->
+                    <TextView
+                        android:id="@+id/tvLocation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        tools:text="Hồ Chí Minh" />
 
-    <!-- White Card Container -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/contentCard"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="20dp"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="4dp"
-        app:cardBackgroundColor="#FFFFFF"
-        app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/userInfoLayout">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:text="|"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp" />
+
+                    <!-- User ID -->
+                    <TextView
+                        android:id="@+id/tvUserId"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawablePadding="4dp"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        app:drawableStartCompat="@drawable/ic_copy"
+                        app:drawableTint="#FFFFFF"
+                        tools:text="ID:1234567" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Toolbar -->
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:layout_collapseMode="pin"
+                app:navigationIcon="@drawable/ic_arrow_back"
+                app:navigationIconTint="#FFFFFF">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="end|center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingEnd="16dp">
+
+                    <ImageView
+                        android:id="@+id/ivMessage"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="16dp"
+                        android:src="@drawable/ic_message"
+                        app:tint="#FFFFFF" />
+
+                    <ImageView
+                        android:id="@+id/ivSettings"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_settings"
+                        app:tint="#FFFFFF" />
+                </LinearLayout>
+            </androidx.appcompat.widget.Toolbar>
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Content -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Tab Layout with Divider -->
-            <FrameLayout
+            <!-- Tabs: Trận đấu / Thành tích / Thư viện -->
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabContent"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="48dp"
+                android:layout_marginTop="16dp"
+                android:background="#FFFFFF"
+                app:tabIndicatorColor="#4CAF50"
+                app:tabIndicatorHeight="3dp"
+                app:tabMode="fixed"
+                app:tabSelectedTextColor="#4CAF50"
+                app:tabTextColor="#999999">
 
-                <com.google.android.material.tabs.TabLayout
-                    android:id="@+id/tabLayout"
-                    android:layout_width="match_parent"
+                <com.google.android.material.tabs.TabItem
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="#FFFFFF"
-                    app:tabIndicatorColor="#00A896"
-                    app:tabIndicatorHeight="3dp"
-                    app:tabSelectedTextColor="#00A896"
-                    app:tabTextColor="#757575"
-                    app:tabMode="fixed"
-                    app:tabGravity="fill"
-                    app:tabTextAppearance="@style/TabTextStyle">
+                    android:text="Trận đấu (24)" />
 
-                    <com.google.android.material.tabs.TabItem
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Lịch sử đặt sân" />
+                <com.google.android.material.tabs.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Thư viện (200)" />
+            </com.google.android.material.tabs.TabLayout>
 
-                    <com.google.android.material.tabs.TabItem
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Thu viện" />
-                </com.google.android.material.tabs.TabLayout>
-
-                <!-- Vertical Divider between tabs -->
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="30dp"
-                    android:layout_gravity="center"
-                    android:background="#383737" />
-            </FrameLayout>
-
-            <!-- Horizontal Divider Line -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="#E0E0E0" />
-
-            <!-- ViewPager2 for Tab Content -->
+            <!-- ViewPager cho content -->
             <androidx.viewpager2.widget.ViewPager2
-                android:id="@+id/viewPager"
+                android:id="@+id/viewPagerContent"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:minHeight="400dp" />
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <!-- ✅ ADDED: Bottom Navigation -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNavigation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#FFFFFF"
-        android:paddingTop="8dp"
-        android:paddingBottom="0dp"
-        app:itemIconTint="@color/bottom_nav_color"
-        app:itemTextColor="@color/bottom_nav_color"
-        app:labelVisibilityMode="labeled"
-        app:menu="@menu/bottom_nav_menu"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:elevation="8dp"
-        app:itemActiveIndicatorStyle="@null"/>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

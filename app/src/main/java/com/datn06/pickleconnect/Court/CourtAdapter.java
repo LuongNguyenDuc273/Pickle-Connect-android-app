@@ -1,5 +1,7 @@
 package com.datn06.pickleconnect.Court;
 
+import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.datn06.pickleconnect.Booking.FieldSelectionActivity;
 import com.datn06.pickleconnect.Model.FacilityDTO;
 import com.datn06.pickleconnect.R;
 import com.google.android.material.button.MaterialButton;
@@ -22,15 +25,17 @@ public class CourtAdapter extends RecyclerView.Adapter<CourtAdapter.CourtViewHol
 
     private final List<FacilityDTO> courtList;
     private final OnCourtClickListener listener;
+    private final Context context;
 
     public interface OnCourtClickListener {
         void onCourtClick(FacilityDTO facility);
         void onBookNowClick(FacilityDTO facility);
     }
 
-    public CourtAdapter(List<FacilityDTO> courtList, OnCourtClickListener listener) {
+    public CourtAdapter(List<FacilityDTO> courtList, OnCourtClickListener listener, Context context) {
         this.courtList = courtList;
         this.listener = listener;
+        this.context = context;
     }
 
     @NonNull
@@ -44,7 +49,7 @@ public class CourtAdapter extends RecyclerView.Adapter<CourtAdapter.CourtViewHol
     @Override
     public void onBindViewHolder(@NonNull CourtViewHolder holder, int position) {
         FacilityDTO facility = courtList.get(position);
-        holder.bind(facility, listener);
+        holder.bind(facility, listener, context);
     }
 
     @Override
@@ -70,7 +75,7 @@ public class CourtAdapter extends RecyclerView.Adapter<CourtAdapter.CourtViewHol
             btnBookNow = itemView.findViewById(R.id.btnBookNow);
         }
 
-        public void bind(FacilityDTO facility, OnCourtClickListener listener) {
+        public void bind(FacilityDTO facility, OnCourtClickListener listener, Context context) {
             tvCourtName.setText(facility.getFacilityName());
             tvAddress.setText(facility.getFullAddress());
             
@@ -117,8 +122,17 @@ public class CourtAdapter extends RecyclerView.Adapter<CourtAdapter.CourtViewHol
                 ivCourtImage.setImageResource(R.drawable.court_placeholder);
             }
             
+            // Click whole item → navigate to detail
             itemView.setOnClickListener(v -> listener.onCourtClick(facility));
-            btnBookNow.setOnClickListener(v -> listener.onBookNowClick(facility));
+            
+            // Click "Đặt ngay" button → navigate to FieldSelectionActivity
+            btnBookNow.setOnClickListener(v -> {
+                // Chuyển trực tiếp sang FieldSelectionActivity
+                Intent intent = new Intent(context, FieldSelectionActivity.class);
+                intent.putExtra("facilityId", facility.getFacilityId());
+                intent.putExtra("facilityName", facility.getFacilityName());
+                context.startActivity(intent);
+            });
         }
     }
 }

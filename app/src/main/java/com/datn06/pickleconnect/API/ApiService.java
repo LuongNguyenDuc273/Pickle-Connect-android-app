@@ -1,10 +1,13 @@
 package com.datn06.pickleconnect.API;
 
+import com.datn06.pickleconnect.Common.BaseResponse;
 import com.datn06.pickleconnect.Event.EventDetailResponse;
 import com.datn06.pickleconnect.Event.EventResponse;
 import com.datn06.pickleconnect.Home.HomeResponse;
 import com.datn06.pickleconnect.Login.LoginRequest;
 import com.datn06.pickleconnect.Login.LoginResponse;
+import com.datn06.pickleconnect.Model.EventRegistrationRequest;
+import com.datn06.pickleconnect.Model.EventRegistrationResponse;
 import com.datn06.pickleconnect.Register.RegisterRequest;
 import com.datn06.pickleconnect.Register.RegisterResponse;
 import com.datn06.pickleconnect.Search.SearchResponse;
@@ -75,5 +78,12 @@ public interface ApiService {
     @GET("api-andr/events/{eventId}")
     Call<EventDetailResponse> getEventDetail(
             @Path("eventId") String eventId
+    );
+
+    // Register Event
+    @POST("api-andr/events/register")
+    Call<BaseResponse<EventRegistrationResponse>> registerEvent(
+//            @Header("X-Userinfo") String xUserinfo,
+            @Body EventRegistrationRequest request
     );
 }

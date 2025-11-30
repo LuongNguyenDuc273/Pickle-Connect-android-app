@@ -18,7 +18,7 @@ public class TokenManager {
     private static final String KEY_USERNAME = "username";
     private static final String KEY_FULL_NAME = "full_name";
     private static final String KEY_EMAIL = "email";
-    private static final String KEY_PHONE_NUMBER = "phone_number"; // ✅ THÊM MỚI
+    private static final String KEY_PHONE_NUMBER = "phone_number";
 
     // Private constructor
     private TokenManager(Context context) {
