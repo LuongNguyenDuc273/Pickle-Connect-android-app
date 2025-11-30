@@ -9,7 +9,7 @@ public enum ServiceHost {
     AUTH_SERVICE("http://10.0.2.2:9005/", "Auth Service (9005)"),
 
     // Member Query API - User Profile & Info (port 9002)
-    MEMBER_SERVICE("http://10.0.2.2:9002/", "Member Service (9002)"),
+    MEMBER_SERVICE("http://10.0.2.2:9003/", "Member Service (9002)"),
 
     // Court Service - Booking & Court Management (port 9008)
     COURT_SERVICE("http://10.0.2.2:9008/", "Court Service (9008)"),
@@ -19,6 +19,9 @@ public enum ServiceHost {
     
     // Transaction Service - Booking History (port 9009)
     TXN_SERVICE("http://10.0.2.2:9020/", "Transaction Service (9020)"),
+
+    // Tournament Api Service (port 9003)
+    TOURNAMENT_SERVICE("http://10.0.2.2:9003/", "API Service (9003)"),
     
     // Payment Service (port 9010) - if available
     PAYMENT_SERVICE("http://10.0.2.2:9010/", "Payment Service (9010)");

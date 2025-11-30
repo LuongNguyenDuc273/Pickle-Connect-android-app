@@ -2,11 +2,13 @@ package com.datn06.pickleconnect.API;
 
 import com.datn06.pickleconnect.Common.BaseRequest;
 import com.datn06.pickleconnect.Common.BaseResponse;
+import com.datn06.pickleconnect.Models.CourtDetailRequest;
 import com.datn06.pickleconnect.Model.CreateBookingCourtRequest;
 import com.datn06.pickleconnect.Model.FacilitySearchResponse;
 import com.datn06.pickleconnect.Model.FieldBookingResponse;
 import com.datn06.pickleconnect.Model.PaymentUrlResponse;
 import com.datn06.pickleconnect.Model.SearchCourtRequest;
+import com.datn06.pickleconnect.Models.CourtDetailResponse;
 
 import retrofit2.Call;
 import retrofit2.http.*;
@@ -190,4 +192,19 @@ public interface CourtApiService {
     // Call<BaseResponse<List<FacilityDTO>>> getSavedFacilities(
     //     @Header("X-Userinfo") String userId
     // );
+
+    /**
+     * Get court detail information
+     * Backend: GET /court/detail
+     *
+     * ✅ UPDATED: Removed @Header("X-Userinfo") - ApiClient interceptor auto-adds this header
+     *
+     * @return Detailed court information including fields, services, reviews, prices
+     */
+
+    @GET("court/detail")
+    Call<BaseResponse<CourtDetailResponse>> getCourtDetail(
+            @Query("userID") String userId,
+            @Query("facilityId") Long facilityId
+    );
 }

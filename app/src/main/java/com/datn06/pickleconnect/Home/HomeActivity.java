@@ -29,6 +29,7 @@ import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.API.ApiService;
 import com.datn06.pickleconnect.API.ServiceHost;
 import com.datn06.pickleconnect.Booking.FieldSelectionActivity;
+import com.datn06.pickleconnect.Court.CourtDetailActivity;
 import com.datn06.pickleconnect.Event.EventsActivity;
 import com.datn06.pickleconnect.R;
 import com.datn06.pickleconnect.Adapter.BannerAdapter;
@@ -82,7 +83,6 @@ public class HomeActivity extends AppCompatActivity {
     private MenuNavigation menuNavigation;
     private int currentBannerPosition = 0;
 
-    // ✅ ADDED: Flag để tránh load lại data nhiều lần
     private boolean isDataLoaded = false;
 
     private final ActivityResultLauncher<String[]> locationPermissionLauncher =
@@ -129,11 +129,9 @@ public class HomeActivity extends AppCompatActivity {
         loadingDialog = new LoadingDialog(this);
         menuNavigation = new MenuNavigation(this);
 
-        // ✅ CHANGED: Chỉ load data lần đầu khi onCreate
         if (savedInstanceState == null) {
             requestLocationAndLoadData();
         } else {
-            // Nếu Activity được restore, data đã có sẵn
             isDataLoaded = true;
         }
     }
@@ -181,9 +179,6 @@ public class HomeActivity extends AppCompatActivity {
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
-    /**
-     * ✅ UPDATED: Setup Bottom Navigation với kiểm tra trang hiện tại
-     */
     private void setupBottomNavigation() {
         if (bottomNavigation != null) {
             bottomNavigation.setSelectedItemId(R.id.nav_home);
@@ -193,14 +188,10 @@ public class HomeActivity extends AppCompatActivity {
                 public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                     int itemId = item.getItemId();
 
-                    // ✅ Kiểm tra nếu đang ở Home thì không navigate
                     if (itemId == R.id.nav_home) {
-                        return true; // Đã ở Home rồi, không làm gì cả
+                        return true;
                     } else {
-                        // Navigate sang trang khác
                         menuNavigation.navigateTo(itemId);
-
-                        // ✅ KHÔNG gọi finish() - để Activity tự quản lý
                         return true;
                     }
                 }
@@ -211,28 +202,18 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // ✅ Đảm bảo bottom navigation luôn highlight đúng item
         if (bottomNavigation != null) {
             bottomNavigation.setSelectedItemId(R.id.nav_home);
         }
-
-        // ✅ ADDED: Không load lại data khi resume nếu đã có data
-        // Data chỉ được load lại khi có intent mới (qua onNewIntent)
     }
 
-    /**
-     * ✅ ADDED: Xử lý khi Activity được gọi lại bằng intent mới
-     * (Khi user navigate về Home từ bottom navigation)
-     */
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        setIntent(intent); // Cập nhật intent mới
+        setIntent(intent);
 
         Log.d(TAG, "onNewIntent called - Activity reused, not reloading data");
 
-        // ✅ OPTIONAL: Có thể thêm logic để refresh data nếu cần
-        // Ví dụ: nếu có flag "forceRefresh" trong intent
         boolean forceRefresh = intent.getBooleanExtra("forceRefresh", false);
         if (forceRefresh) {
             Log.d(TAG, "Force refresh requested");
@@ -274,17 +255,17 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
-        // ✅ UPDATED: Changed callback to open FieldSelectionActivity instead of EventsActivity
+        // ✅ UPDATED: Tách biệt 2 loại click
         facilityGroupAdapter = new FacilityGroupAdapter(this, new FacilityAdapter.OnFacilityClickListener() {
             @Override
             public void onFacilityClick(FacilityDTO facility) {
-                // ✅ CHANGED: Open booking screen instead of events
-                openFieldSelection(facility);
+                // ✅ Click vào card (không phải nút) -> mở CourtDetailActivity
+                openCourtDetail(facility);
             }
 
             @Override
             public void onBookClick(FacilityDTO facility) {
-                // ✅ CHANGED: Open booking screen
+                // ✅ Click vào nút "ĐẶT SÂN" -> mở FieldSelectionActivity
                 openFieldSelection(facility);
             }
         });
@@ -434,7 +415,6 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void requestLocationAndLoadData() {
-        // ✅ ADDED: Kiểm tra nếu data đã được load rồi thì không load lại
         if (isDataLoaded) {
             Log.d(TAG, "Data already loaded, skipping");
             return;
@@ -537,7 +517,6 @@ public class HomeActivity extends AppCompatActivity {
                                     Log.d(TAG, "Loaded " + facilities.size() + " facilities, grouped into " + facilityGroups.size() + " pages.");
                                 }
 
-                                // ✅ ADDED: Đánh dấu data đã được load
                                 isDataLoaded = true;
 
                                 Toast.makeText(HomeActivity.this, "Đã tải xong!", Toast.LENGTH_SHORT).show();
@@ -595,29 +574,27 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    // ✅ UPDATED: Changed to open FieldSelectionActivity instead of EventsActivity
-    private void openFieldSelection(FacilityDTO facility) {
-        Intent intent = new Intent(HomeActivity.this, FieldSelectionActivity.class);
+    // ✅ NEW: Open CourtDetailActivity (click vào card)
+    private void openCourtDetail(FacilityDTO facility) {
+        Intent intent = new Intent(HomeActivity.this, CourtDetailActivity.class);
         intent.putExtra("facilityId", facility.getFacilityId());
-        intent.putExtra("facilityName", facility.getFacilityName());
-        // bookDate will be set to today's date in FieldSelectionActivity
 
-        Log.d(TAG, "Opening FieldSelectionActivity for facility: " + facility.getFacilityName());
+        Log.d(TAG, "Opening CourtDetailActivity for facility: " + facility.getFacilityName());
 
         startActivity(intent);
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
-    // ✅ KEPT: Old method renamed for backward compatibility if needed
-    @Deprecated
-    private void openFacilityDetail(FacilityDTO facility) {
-        // This now redirects to field selection
-        openFieldSelection(facility);
-    }
+    // ✅ UPDATED: Open FieldSelectionActivity (click nút "ĐẶT SÂN")
+    private void openFieldSelection(FacilityDTO facility) {
+        Intent intent = new Intent(HomeActivity.this, FieldSelectionActivity.class);
+        intent.putExtra("facilityId", facility.getFacilityId());
+        intent.putExtra("facilityName", facility.getFacilityName());
 
-    // ✅ UPDATED: Also opens field selection
-    private void bookFacility(FacilityDTO facility) {
-        openFieldSelection(facility);
+        Log.d(TAG, "Opening FieldSelectionActivity for facility: " + facility.getFacilityName());
+
+        startActivity(intent);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private void openMapActivity() {

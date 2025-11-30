@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Pickle Connect</string>
-    
+    <string name="court_image">Court Image</string>
     <!-- Gender options -->
     <string-array name="gender_options">
         <item>Nam</item>

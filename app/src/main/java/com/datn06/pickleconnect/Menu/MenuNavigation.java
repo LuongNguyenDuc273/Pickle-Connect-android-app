@@ -8,6 +8,7 @@ import com.datn06.pickleconnect.Profile.ProfileActivity;
 import com.datn06.pickleconnect.R;
 import com.datn06.pickleconnect.Home.HomeActivity;
 import com.datn06.pickleconnect.Search.SearchedActivity;
+import com.datn06.pickleconnect.tournament.TournamentListActivity;
 // Import các Activity khác khi đã tạo
 // import com.datn06.pickleconnect.Booking.BookingActivity;
 // import com.datn06.pickleconnect.Account.AccountActivity;
@@ -31,6 +32,12 @@ public class MenuNavigation {
              Intent intent = new Intent(context, SearchedActivity.class);
              intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
              context.startActivity(intent);
+        }
+        else if (destinationID == R.id.nav_tournaments) {
+            // Chuyển đến Account (Tài khoản)
+            Intent intent = new Intent(context, TournamentListActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
         }
         else if (destinationID == R.id.nav_account) {
             // Chuyển đến Account (Tài khoản)
