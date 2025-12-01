@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -66,6 +67,9 @@ public class CourtDetailActivity extends AppCompatActivity {
     private RecyclerView recyclerViewReviews;
     private TableLayout tableLayoutPrices;
     private TextView tvOverallRating;
+    private Button btnBook;
+    private LinearLayout layoutStars;
+    private ImageView btnFavorite;
 
     // Adapters
     private CourtImageAdapter imageAdapter;
@@ -96,6 +100,7 @@ public class CourtDetailActivity extends AppCompatActivity {
 
         initViews();
         setupRecyclerViews();
+        setupButtons();
         setupApiService();
         loadCourtDetail();
     }
@@ -116,12 +121,18 @@ public class CourtDetailActivity extends AppCompatActivity {
         viewPagerImages = findViewById(R.id.viewPagerImages);
         layoutIndicator = findViewById(R.id.layoutIndicator);
 
+        // Button
+        btnBook = findViewById(R.id.btnBook);
+        btnFavorite = findViewById(R.id.btnFavorite);
+
         // RecyclerViews
         recyclerViewServices = findViewById(R.id.recyclerViewServices);
         recyclerViewReviews = findViewById(R.id.recyclerViewReviews);
 
         // TableLayout
         tableLayoutPrices = findViewById(R.id.tableLayoutPrices);
+
+        layoutStars = findViewById(R.id.layoutStars);
     }
 
     private void setupRecyclerViews() {
@@ -134,6 +145,32 @@ public class CourtDetailActivity extends AppCompatActivity {
         recyclerViewReviews.setLayoutManager(new LinearLayoutManager(this));
         reviewAdapter = new ReviewAdapter(new ArrayList<>());
         recyclerViewReviews.setAdapter(reviewAdapter);
+    }
+
+    private void setupButtons() {
+        btnBook.setOnClickListener(v -> {
+            String userId = tokenManager.getUserId();
+            if (userId == null || userId.isEmpty()) {
+                Toast.makeText(this, "Vui lòng đăng nhập để đặt sân", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (facilityId == null || facilityId == 0) {
+                Toast.makeText(this, "Lỗi: Không tìm thấy thông tin sân", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String facilityName = courtDetail != null ? courtDetail.getFacilityName() : "";
+
+            Intent intent = new Intent(CourtDetailActivity.this, FieldSelectionActivity.class);
+            intent.putExtra("facilityId", facilityId);
+            intent.putExtra("facilityName", facilityName);
+            startActivity(intent);
+        });
+
+        btnFavorite.setOnClickListener(v -> {
+            Toast.makeText(this, "Chức năng yêu thích đang phát triển", Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void loadCourtDetail() {
@@ -219,16 +256,22 @@ public class CourtDetailActivity extends AppCompatActivity {
             }
         }
 
-        // Hiển thị đánh giá
-        if (courtDetail.getReviews() != null) {
+        if (courtDetail.getReviews() != null && !courtDetail.getReviews().isEmpty()) {
             reviewAdapter.updateData(courtDetail.getReviews());
-            // ✅ THÊM: Thông báo cho Adapter để cập nhật RecyclerView
             reviewAdapter.notifyDataSetChanged();
-            displayOverallRating();
+            displayOverallRating(); // ✅ Hiển thị rating + sao
         } else {
             reviewAdapter.updateData(new ArrayList<>());
             reviewAdapter.notifyDataSetChanged();
-            tvOverallRating.setText("N/A"); // Đặt rating là N/A nếu không có review
+            tvOverallRating.setText("N/A");
+
+            // ✅ Hiển thị 0 sao khi không có review
+            if (layoutStars != null) {
+                layoutStars.removeAllViews();
+                for (int i = 0; i < 5; i++) {
+                    layoutStars.addView(createStarImage(R.drawable.ic_star_empty));
+                }
+            }
         }
     }
 
@@ -289,107 +332,143 @@ public class CourtDetailActivity extends AppCompatActivity {
             tableLayoutPrices.removeViews(1, childCount - 1);
         }
 
-        // Group prices by weekday
-        Map<String, List<FieldPriceDTO>> groupedPrices = groupPricesByWeekday();
-
-        // Add rows for each group
-        for (Map.Entry<String, List<FieldPriceDTO>> entry : groupedPrices.entrySet()) {
-            String weekdayLabel = entry.getKey();
-            List<FieldPriceDTO> prices = entry.getValue();
-
-            for (FieldPriceDTO price : prices) {
+        // ✅ KHÔNG NHÓM - Hiển thị từng dòng với label gốc từ backend
+        if (courtDetail.getPrices() != null) {
+            for (FieldPriceDTO price : courtDetail.getPrices()) {
+                String weekdayLabel = formatWeekdayLabel(price.getWeekday());
                 TableRow row = createPriceRow(weekdayLabel, price);
                 tableLayoutPrices.addView(row);
-                weekdayLabel = ""; // Only show weekday label for first row
             }
         }
     }
 
-    private Map<String, List<FieldPriceDTO>> groupPricesByWeekday() {
-        Map<String, List<FieldPriceDTO>> grouped = new HashMap<>();
-
-        for (FieldPriceDTO price : courtDetail.getPrices()) {
-            String key = getWeekdayGroupLabel(price.getWeekday());
-            if (!grouped.containsKey(key)) {
-                grouped.put(key, new ArrayList<>());
-            }
-            grouped.get(key).add(price);
+    /**
+     * Chuyển đổi weekday từ tiếng Anh sang tiếng Việt
+     * Hỗ trợ cả ngày đơn lẻ và khoảng ngày
+     *
+     * Ví dụ:
+     * - "Monday" -> "Thứ 2"
+     * - "Monday-Friday" -> "T2 - T6"
+     * - "Monday-Wednesday" -> "T2 - T4"
+     * - "Saturday-Sunday" -> "T7 - CN"
+     */
+    private String formatWeekdayLabel(String weekday) {
+        if (weekday == null || weekday.isEmpty()) {
+            return "Không xác định";
         }
 
-        return grouped;
-    }
+        weekday = weekday.trim();
 
-
-    private String getWeekdayGroupLabel(String weekday) {
-        if (weekday == null || weekday.isEmpty()) return "Không xác định";
-
-        weekday = weekday.trim().toLowerCase();
-
-        // Nếu là khoảng: "monday-saturday" hoặc "t2-t7"
+        // ✅ Kiểm tra nếu là khoảng ngày (có dấu "-")
         if (weekday.contains("-")) {
             String[] parts = weekday.split("-");
             if (parts.length == 2) {
-                int from = convertToDayNumber(parts[0].trim());
-                int to = convertToDayNumber(parts[1].trim());
+                String from = parts[0].trim();
+                String to = parts[1].trim();
 
-                if (from == -1 || to == -1) return "Khác";
+                String fromVi = convertDayToVietnamese(from);
+                String toVi = convertDayToVietnamese(to);
 
-                // Nếu khoảng nằm trong T2-T6
-                if (from >= 1 && to <= 5) return "T2 - T6";
-
-                // Nếu gồm T7 hoặc CN
-                if (to == 6 || to == 0) return "T7 - CN";
-
-                return "Khác";
+                return fromVi + " - " + toVi;
             }
-            return "Khác";
         }
 
-        // --- Trường hợp chỉ 1 ngày ---
-        int dayNumber = convertToDayNumber(weekday);
-        if (dayNumber == -1) return "Khác";
-
-        if (dayNumber >= 1 && dayNumber <= 5) return "T2 - T6";
-        if (dayNumber == 6 || dayNumber == 0) return "T7 - CN";
-
-        return "Khác";
+        // ✅ Nếu chỉ là 1 ngày đơn lẻ
+        return convertDayToVietnamese(weekday);
     }
 
-    private int convertToDayNumber(String weekday) {
-        switch (weekday) {
-            // English full
-            case "monday": return 1;
-            case "tuesday": return 2;
-            case "wednesday": return 3;
-            case "thursday": return 4;
-            case "friday": return 5;
-            case "saturday": return 6;
-            case "sunday": return 0;
+    /**
+     * Chuyển đổi tên ngày từ tiếng Anh sang tiếng Việt (viết tắt hoặc đầy đủ)
+     */
+    private String convertDayToVietnamese(String day) {
+        if (day == null || day.isEmpty()) {
+            return "?";
+        }
 
-            // English short
-            case "mon": return 1;
-            case "tue": return 2;
-            case "wed": return 3;
-            case "thu": return 4;
-            case "fri": return 5;
-            case "sat": return 6;
-            case "sun": return 0;
+        switch (day.toLowerCase()) {
+            // Full English names
+            case "monday":
+                return "T2";
+            case "tuesday":
+                return "T3";
+            case "wednesday":
+                return "T4";
+            case "thursday":
+                return "T5";
+            case "friday":
+                return "T6";
+            case "saturday":
+                return "T7";
+            case "sunday":
+                return "CN";
 
-            // Vietnamese
-            case "t2": return 1;
-            case "t3": return 2;
-            case "t4": return 3;
-            case "t5": return 4;
-            case "t6": return 5;
-            case "t7": return 6;
-            case "cn": return 0;
+            // Short English names
+            case "mon":
+                return "T2";
+            case "tue":
+                return "T3";
+            case "wed":
+                return "T4";
+            case "thu":
+                return "T5";
+            case "fri":
+                return "T6";
+            case "sat":
+                return "T7";
+            case "sun":
+                return "CN";
+
+            // Already Vietnamese
+            case "t2":
+            case "t3":
+            case "t4":
+            case "t5":
+            case "t6":
+            case "t7":
+            case "cn":
+                return day.toUpperCase();
 
             default:
-                return -1;
+                // Trả về nguyên bản nếu không khớp
+                return day;
         }
     }
 
+    /**
+     * Alternative: Nếu muốn hiển thị tên đầy đủ thay vì viết tắt
+     * Ví dụ: "Thứ 2" thay vì "T2"
+     */
+    private String convertDayToVietnameseFull(String day) {
+        if (day == null || day.isEmpty()) {
+            return "Không xác định";
+        }
 
+        switch (day.toLowerCase()) {
+            case "monday":
+            case "mon":
+                return "Thứ 2";
+            case "tuesday":
+            case "tue":
+                return "Thứ 3";
+            case "wednesday":
+            case "wed":
+                return "Thứ 4";
+            case "thursday":
+            case "thu":
+                return "Thứ 5";
+            case "friday":
+            case "fri":
+                return "Thứ 6";
+            case "saturday":
+            case "sat":
+                return "Thứ 7";
+            case "sunday":
+            case "sun":
+                return "Chủ nhật";
+            default:
+                return day;
+        }
+    }
 
     private TableRow createPriceRow(String weekdayLabel, FieldPriceDTO price) {
         TableRow row = new TableRow(this);
@@ -430,9 +509,66 @@ public class CourtDetailActivity extends AppCompatActivity {
 
     private void displayOverallRating() {
         double avgRating = courtDetail.getAverageRating();
+
+        // Hiển thị số rating
         if (tvOverallRating != null) {
             tvOverallRating.setText(String.format("%.1f", avgRating));
         }
+
+        // ✅ Hiển thị sao động
+        if (layoutStars != null) {
+            displayStarRating(avgRating);
+        }
+    }
+
+    private void displayStarRating(double rating) {
+        // Xóa các sao cũ
+        layoutStars.removeAllViews();
+
+        // Tính toán số sao
+        int fullStars = (int) rating; // Số sao đầy
+        boolean hasHalfStar = (rating - fullStars) >= 0.5; // Có sao nửa không
+        int emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0); // Số sao rỗng
+
+        // Thêm sao đầy
+        for (int i = 0; i < fullStars; i++) {
+            layoutStars.addView(createStarImage(R.drawable.ic_star_filled));
+        }
+
+        // Thêm sao nửa (nếu có)
+        if (hasHalfStar) {
+            layoutStars.addView(createStarImage(R.drawable.ic_star_half));
+        }
+
+        // Thêm sao rỗng
+        for (int i = 0; i < emptyStars; i++) {
+            layoutStars.addView(createStarImage(R.drawable.ic_star_empty));
+        }
+    }
+
+    private ImageView createStarImage(int drawableRes) {
+        ImageView star = new ImageView(this);
+
+        // Set size (20dp x 20dp)
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                dpToPx(20),
+                dpToPx(20)
+        );
+        params.setMarginStart(dpToPx(4)); // Margin 4dp giữa các sao
+        star.setLayoutParams(params);
+
+        // Set icon
+        star.setImageResource(drawableRes);
+
+        // Set tint màu vàng (optional)
+        // star.setColorFilter(getResources().getColor(R.color.star_yellow));
+
+        return star;
+    }
+
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 
     private void setupApiService() {
