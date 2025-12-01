@@ -3,15 +3,12 @@ package com.datn06.pickleconnect.Menu;
 import android.content.Context;
 import android.content.Intent;
 
-import com.datn06.pickleconnect.MainActivity;
+import com.datn06.pickleconnect.Court.CourtListActivity;
 import com.datn06.pickleconnect.Profile.ProfileActivity;
 import com.datn06.pickleconnect.R;
 import com.datn06.pickleconnect.Home.HomeActivity;
-import com.datn06.pickleconnect.Search.SearchedActivity;
 import com.datn06.pickleconnect.tournament.TournamentListActivity;
-// Import các Activity khác khi đã tạo
-// import com.datn06.pickleconnect.Booking.BookingActivity;
-// import com.datn06.pickleconnect.Account.AccountActivity;
+
 
 public class MenuNavigation {
     private Context context;
@@ -29,7 +26,7 @@ public class MenuNavigation {
         }
         else if (destinationID == R.id.nav_booking) {
             // Chuyển đến Booking (Đặt sân)
-             Intent intent = new Intent(context, SearchedActivity.class);
+             Intent intent = new Intent(context, CourtListActivity.class);
              intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
              context.startActivity(intent);
         }

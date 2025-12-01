@@ -19,8 +19,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class BookingHistoryAdapter extends RecyclerView.Adapter<BookingHistoryAdapter.BookingViewHolder> {
 
@@ -85,28 +87,64 @@ public class BookingHistoryAdapter extends RecyclerView.Adapter<BookingHistoryAd
             holder.tvBookingDate.setText("N/A");
         }
 
-        // Ticket type - for now, just show "Sân thường"
-        holder.tvTicketType.setText("Sân thường");
+        // Ticket type - extract from booking code (e.g., "EVENT-xxx" -> "EVENT")
+        String ticketType = "N/A";
+        if (booking.getBookingCode() != null && booking.getBookingCode().contains("-")) {
+            ticketType = booking.getBookingCode().split("-")[0];
+        }
+        holder.tvTicketType.setText(ticketType);
 
-        // Time slots - group by field
+        // Time slots - group by field name
         holder.flexSlotsSan1.removeAllViews();
         if (booking.getSlots() != null && !booking.getSlots().isEmpty()) {
+            // Group slots by fieldName
+            Map<String, List<FieldTimeSlotDTO>> slotsByField = new LinkedHashMap<>();
             for (FieldTimeSlotDTO slot : booking.getSlots()) {
-                TextView slotView = new TextView(context);
-                slotView.setText(slot.getTimeSlotDisplay());
-                slotView.setTextSize(12);
-                slotView.setTextColor(context.getResources().getColor(R.color.white, null));
-                slotView.setBackground(context.getDrawable(R.drawable.bg_time_slot_selected));
-                slotView.setPadding(16, 12, 16, 12);
+                String fieldName = slot.getFieldName() != null ? slot.getFieldName() : "Sân N/A";
+                if (!slotsByField.containsKey(fieldName)) {
+                    slotsByField.put(fieldName, new ArrayList<>());
+                }
+                slotsByField.get(fieldName).add(slot);
+            }
+            
+            // Display each field group
+            for (Map.Entry<String, List<FieldTimeSlotDTO>> entry : slotsByField.entrySet()) {
+                String fieldName = entry.getKey();
+                List<FieldTimeSlotDTO> slots = entry.getValue();
                 
-                FlexboxLayout.LayoutParams params = new FlexboxLayout.LayoutParams(
-                    FlexboxLayout.LayoutParams.WRAP_CONTENT,
+                // Add field name label
+                TextView fieldLabel = new TextView(context);
+                fieldLabel.setText(fieldName + ":");
+                fieldLabel.setTextSize(13);
+                fieldLabel.setTextColor(context.getResources().getColor(R.color.text_dark, null));
+                fieldLabel.setTypeface(null, android.graphics.Typeface.BOLD);
+                fieldLabel.setPadding(0, 16, 0, 8);
+                
+                FlexboxLayout.LayoutParams labelParams = new FlexboxLayout.LayoutParams(
+                    FlexboxLayout.LayoutParams.MATCH_PARENT,
                     FlexboxLayout.LayoutParams.WRAP_CONTENT
                 );
-                params.setMargins(8, 8, 8, 8);
-                slotView.setLayoutParams(params);
+                fieldLabel.setLayoutParams(labelParams);
+                holder.flexSlotsSan1.addView(fieldLabel);
                 
-                holder.flexSlotsSan1.addView(slotView);
+                // Add time slots for this field
+                for (FieldTimeSlotDTO slot : slots) {
+                    TextView slotView = new TextView(context);
+                    slotView.setText(slot.getTimeSlotDisplay());
+                    slotView.setTextSize(12);
+                    slotView.setTextColor(context.getResources().getColor(R.color.white, null));
+                    slotView.setBackground(context.getDrawable(R.drawable.bg_time_slot_selected));
+                    slotView.setPadding(16, 12, 16, 12);
+                    
+                    FlexboxLayout.LayoutParams params = new FlexboxLayout.LayoutParams(
+                        FlexboxLayout.LayoutParams.WRAP_CONTENT,
+                        FlexboxLayout.LayoutParams.WRAP_CONTENT
+                    );
+                    params.setMargins(8, 8, 8, 8);
+                    slotView.setLayoutParams(params);
+                    
+                    holder.flexSlotsSan1.addView(slotView);
+                }
             }
         }
 
@@ -114,7 +152,7 @@ public class BookingHistoryAdapter extends RecyclerView.Adapter<BookingHistoryAd
         if (booking.getTotalHours() != null) {
             holder.tvTotalHours.setText(booking.getTotalHours().intValue() + "h");
         } else {
-            holder.tvTotalHours.setText("0h");
+            holder.tvTotalHours.setText("");
         }
 
         // Total price
@@ -126,7 +164,7 @@ public class BookingHistoryAdapter extends RecyclerView.Adapter<BookingHistoryAd
         }
 
         // Note - for now, leave empty or add later
-        holder.tvNote.setText("Cần người nhất hồng");
+        holder.tvNote.setText("");
 
         // Button listeners
         holder.btnDetail.setOnClickListener(v -> {

@@ -80,9 +80,9 @@ public class PaymentResultActivity extends AppCompatActivity {
 
     private void showSuccessResult(String txnRef, String amount, String orderInfo) {
         ivResultIcon.setImageResource(R.drawable.ic_success);
-        tvResultTitle.setText("Đặt sân thành công!");
+        tvResultTitle.setText("Thanh toán thành công!");
         tvResultTitle.setTextColor(getColor(R.color.success_green));
-        tvResultMessage.setText("Vui lòng xuất trình phiếu đặt sân tại sân đã đặt để nhận sân");
+        tvResultMessage.setText("Vui lòng xuất trình phiếu tại sân đã đặt để nhận sân");
         
         // Display booking ID (txnRef)
         if (txnRef != null && !txnRef.isEmpty()) {

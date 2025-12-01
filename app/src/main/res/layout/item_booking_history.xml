@@ -172,56 +172,16 @@
             android:orientation="vertical"
             android:layout_marginTop="12dp">
 
-            <!-- Sân 1 -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Sân 1:"
-                android:textColor="@color/text_dark"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
+            <!-- FlexboxLayout will display field names and slots dynamically -->
             <com.google.android.flexbox.FlexboxLayout
                 android:id="@+id/flexSlotsSan1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
                 app:flexWrap="wrap"
                 app:justifyContent="flex_start">
 
-                <!-- Slots will be added programmatically -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="6:30 - 8:00"
-                    android:textSize="12sp"
-                    android:textColor="@color/white"
-                    android:background="@drawable/bg_time_slot_selected"
-                    android:padding="6dp"
-                    android:layout_margin="4dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="12:00 - 13:00"
-                    android:textSize="12sp"
-                    android:textColor="@color/white"
-                    android:background="@drawable/bg_time_slot_selected"
-                    android:padding="6dp"
-                    android:layout_margin="4dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="16:30 - 18:00"
-                    android:textSize="12sp"
-                    android:textColor="@color/white"
-                    android:background="@drawable/bg_time_slot_selected"
-                    android:padding="6dp"
-                    android:layout_margin="4dp" />
+                <!-- Slots will be added programmatically with field names -->
             </com.google.android.flexbox.FlexboxLayout>
-
-            <!-- Additional courts can be added similarly -->
         </LinearLayout>
 
         <!-- Divider -->

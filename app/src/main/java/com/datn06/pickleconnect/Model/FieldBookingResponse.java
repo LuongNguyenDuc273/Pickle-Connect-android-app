@@ -172,8 +172,8 @@ public class FieldBookingResponse {
         TimeSlotDTO currentMerged = null;
         
         for (TimeSlotDTO slot : slots) {
-            // Check if this slot is an event
-            boolean isEvent = slot.getEventId() != null;
+            // Check if this slot is an event (use helper method to avoid "null" string)
+            boolean isEvent = slot.isEventSlot();
             
             if (!isEvent) {
                 // Not an event - add previous merged slot if exists, then add this regular slot

@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 public class TimeSlotDTO {
     
     @SerializedName("slotId")
-    private Long slotId;
+    private String slotId;  // Changed to String to match backend
     
     @SerializedName("startTime")
     private String startTime;  // Format: "07:00:00" or "07:00"
@@ -34,7 +34,7 @@ public class TimeSlotDTO {
     
     // ✅ EVENT FIELDS - Thông tin sự kiện (nếu slot này là event)
     @SerializedName("eventId")
-    private Long eventId;
+    private String eventId;  // Changed to String to match backend
     
     @SerializedName("eventName")
     private String eventName;
@@ -51,7 +51,7 @@ public class TimeSlotDTO {
     // Constructor
     public TimeSlotDTO() {}
     
-    public TimeSlotDTO(Long slotId, String startTime, String endTime, String slotLabel,
+    public TimeSlotDTO(String slotId, String startTime, String endTime, String slotLabel,
                        String slotStatus, BigDecimal fixedPrice, BigDecimal walkinPrice,
                        Boolean isAvailable) {
         this.slotId = slotId;
@@ -65,11 +65,11 @@ public class TimeSlotDTO {
     }
     
     // Getters and Setters
-    public Long getSlotId() {
+    public String getSlotId() {
         return slotId;
     }
     
-    public void setSlotId(Long slotId) {
+    public void setSlotId(String slotId) {
         this.slotId = slotId;
     }
     
@@ -130,11 +130,11 @@ public class TimeSlotDTO {
     }
     
     // ✅ EVENT GETTERS & SETTERS
-    public Long getEventId() {
+    public String getEventId() {
         return eventId;
     }
     
-    public void setEventId(Long eventId) {
+    public void setEventId(String eventId) {
         this.eventId = eventId;
     }
     
@@ -251,6 +251,13 @@ public class TimeSlotDTO {
         // Implementation depends on current time comparison
         // For now, return false (backend should handle this)
         return false;
+    }
+    
+    /**
+     * Check if this is an event slot (eventId is not null and not "null" string)
+     */
+    public boolean isEventSlot() {
+        return eventId != null && !eventId.isEmpty() && !"null".equals(eventId);
     }
     
     /**

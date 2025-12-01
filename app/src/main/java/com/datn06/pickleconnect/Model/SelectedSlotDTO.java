@@ -98,8 +98,20 @@ public class SelectedSlotDTO {
      * Create SelectedSlotDTO from TimeSlotDTO and FieldAvailabilityDTO
      */
     public static SelectedSlotDTO fromTimeSlot(TimeSlotDTO timeSlot, Long fieldId) {
+        // Parse slotId from String to Long (backend may return String but expects Long in booking)
+        Long slotIdLong = null;
+        try {
+            slotIdLong = Long.valueOf(timeSlot.getSlotId());
+        } catch (NumberFormatException e) {
+            // If slotId is not numeric, try to extract numeric part
+            String numericPart = timeSlot.getSlotId().replaceAll("[^0-9]", "");
+            if (!numericPart.isEmpty()) {
+                slotIdLong = Long.valueOf(numericPart);
+            }
+        }
+        
         SelectedSlotDTO dto = new SelectedSlotDTO(
-            timeSlot.getSlotId(),
+            slotIdLong,
             fieldId,
             timeSlot.getFixedPrice()
         );

@@ -179,12 +179,13 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             // Set time label
             tvTimeRange.setText(slot.getSlotLabel());
             
-            // Check if this is an EVENT slot
-            boolean isEvent = slot.getEventId() != null && slot.getEventName() != null;
+            // Check if this is an EVENT slot (use helper method to avoid "null" string)
+            boolean isEvent = slot.isEventSlot();
             
-            // Check if selected
+            // Check if selected (compare Long with String slotId)
             boolean isSelected = selectedSlots.stream()
-                .anyMatch(s -> s.getSlotId().equals(slot.getSlotId()));
+                .anyMatch(s -> s.getSlotId() != null && 
+                              s.getSlotId().toString().equals(slot.getSlotId()));
             
             // Set card background color based on status
             int bgColor;
@@ -192,9 +193,22 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             
             if (isEvent) {
                 // ✅ EVENT SLOT - Màu hồng (Pink)
-                bgColor = Color.parseColor("#FF4081");  // Material Pink
-                isClickable = true;  // Event có thể click để xem detail
-                tvTimeRange.setTextColor(Color.WHITE);
+                // Check if event is full
+                boolean isEventFull = slot.getCurrentParticipants() != null && 
+                                     slot.getMaxParticipants() != null &&
+                                     slot.getCurrentParticipants() >= slot.getMaxParticipants();
+                
+                if (isEventFull) {
+                    // Event full - Màu hồng nhạt, không click được
+                    bgColor = Color.parseColor("#F8BBD0");  // Light Pink
+                    isClickable = false;
+                    tvTimeRange.setTextColor(Color.parseColor("#757575"));
+                } else {
+                    // Event còn chỗ - Màu hồng đậm, click được
+                    bgColor = Color.parseColor("#FF4081");  // Material Pink
+                    isClickable = true;
+                    tvTimeRange.setTextColor(Color.WHITE);
+                }
                 
                 // Ẩn tvPrice, hiển thị layoutEventInfo
                 tvPrice.setVisibility(View.GONE);
@@ -203,6 +217,17 @@ public class TimeSlotAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 // Set event info
                 tvEventName.setText(slot.getEventName());
                 tvParticipants.setText(slot.getCurrentParticipants() + "/" + slot.getMaxParticipants());
+                
+                // Set text color based on availability
+                if (isEventFull) {
+                    tvEventName.setTextColor(Color.parseColor("#757575"));
+                    tvParticipants.setTextColor(Color.parseColor("#757575"));
+                    tvEventPrice.setTextColor(Color.parseColor("#757575"));
+                } else {
+                    tvEventName.setTextColor(Color.WHITE);
+                    tvParticipants.setTextColor(Color.WHITE);
+                    tvEventPrice.setTextColor(Color.WHITE);
+                }
                 
                 // Giá event từ ticketPrice (không phải fixedPrice của slot)
                 if (slot.getTicketPrice() != null && slot.getTicketPrice().intValue() > 0) {

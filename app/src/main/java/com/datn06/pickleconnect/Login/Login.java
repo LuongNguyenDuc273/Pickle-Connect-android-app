@@ -100,14 +100,30 @@ public class Login extends AppCompatActivity {
                                 data.getPhoneNumber()                 // phoneNumber ✅ THÊM
                         );
 
+                        // ALSO save to SharedPrefManager (used by BookingConfirmActivity)
+                        SharedPrefManager prefManager = SharedPrefManager.getInstance(Login.this);
+                        prefManager.saveUser(
+                                String.valueOf(data.getAccountId()),  // userId
+                                data.getUserName(),                   // username
+                                data.getEmail(),                      // email
+                                data.getPhoneNumber(),                // phoneNumber
+                                data.getFullName()                    // fullName
+                        );
+                        prefManager.saveTokens(data.getToken(), data.getRefreshToken());
+
                         //Set token cho ApiClient (để Interceptor tự động thêm vào header)
                         ApiClient.setAuthToken(data.getToken());
+                        // Reload token to ensure all retrofit instances are refreshed
+                        ApiClient.reloadToken();
 
                         AlertHelper.showSuccess(Login.this,
                                 "Đăng nhập thành công! Xin chào " + data.getFullName());
 
                         new android.os.Handler().postDelayed(() -> {
                             Intent intent = new Intent(Login.this, HomeActivity.class);
+                            // Clear all previous activities to ensure fresh start
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            intent.putExtra("forceRefresh", true);  // Force reload data
                             startActivity(intent);
                             finish();
                         }, 2000);

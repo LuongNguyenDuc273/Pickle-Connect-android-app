@@ -300,8 +300,9 @@ public class FieldSelectionActivity extends AppCompatActivity {
             
             selectedSlots.add(selectedSlot);
         } else {
-            // Remove from selection
-            selectedSlots.removeIf(s -> s.getSlotId().equals(slot.getSlotId()));
+            // Remove from selection (compare Long slotId with String slot.getSlotId())
+            selectedSlots.removeIf(s -> s.getSlotId() != null && 
+                                        s.getSlotId().toString().equals(slot.getSlotId()));
         }
         
         updateSummary();

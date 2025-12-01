@@ -48,7 +48,7 @@ public class EventsActivity extends AppCompatActivity {
     private SimpleDateFormat dateFormat;
 
     // Facility Info
-    private Integer facilityId = null;
+    private Long facilityId = null;
     private String facilityName = null;
 
     @Override
@@ -93,9 +93,9 @@ public class EventsActivity extends AppCompatActivity {
         Intent intent = getIntent();
         if (intent != null) {
             if (intent.hasExtra("facilityId")) {
-                long facilityIdLong = intent.getLongExtra("facilityId", -1L);
-                if (facilityIdLong != -1L) {
-                    facilityId = (int) facilityIdLong;
+                facilityId = intent.getLongExtra("facilityId", -1L);
+                if (facilityId == -1L) {
+                    facilityId = null;
                 }
             }
             if (intent.hasExtra("facilityName")) {
@@ -143,7 +143,7 @@ public class EventsActivity extends AppCompatActivity {
         // Tab Product - Switch to FieldSelectionActivity
         tabProduct.setOnClickListener(v -> {
             Intent intent = new Intent(EventsActivity.this, FieldSelectionActivity.class);
-            intent.putExtra("facilityId", facilityId != null ? facilityId.longValue() : 0L);
+            intent.putExtra("facilityId", facilityId != null ? facilityId : 0L);
             intent.putExtra("facilityName", facilityName);
             startActivity(intent);
             // Close current activity

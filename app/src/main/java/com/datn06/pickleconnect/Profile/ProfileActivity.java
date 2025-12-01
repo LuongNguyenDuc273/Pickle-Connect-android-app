@@ -17,6 +17,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
 import com.datn06.pickleconnect.API.ApiClient;
+import com.datn06.pickleconnect.API.AppConfig;
 import com.datn06.pickleconnect.API.MemberApiService;
 import com.datn06.pickleconnect.API.ServiceHost;
 import com.datn06.pickleconnect.Adapter.ProfilePagerAdapter;
@@ -25,6 +26,7 @@ import com.datn06.pickleconnect.Login.Login;
 import com.datn06.pickleconnect.Models.MemberInfoRequest;
 import com.datn06.pickleconnect.Models.MemberInfoResponse;
 import com.datn06.pickleconnect.Utils.LoadingDialog;
+import com.datn06.pickleconnect.Utils.SharedPrefManager;
 import com.datn06.pickleconnect.Utils.TokenManager;
 import com.datn06.pickleconnect.Menu.MenuNavigation;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -240,19 +242,8 @@ public class ProfileActivity extends AppCompatActivity {
             // Load avatar image using Glide
             if (data.getAvatarUrl() != null && !data.getAvatarUrl().isEmpty()) {
                 // Convert localhost MinIO URL to public ngrok URL
-                String imageUrl = data.getAvatarUrl();
-                
+                String imageUrl = AppConfig.fixImageUrl(data.getAvatarUrl());
                 // Replace localhost:9000 with ngrok URL
-                // Lấy URL từ: docker logs ngrok-minio
-                if (imageUrl.contains("localhost:9000")) {
-                    imageUrl = imageUrl.replace("http://localhost:9000", "https://soren-painted-erosely.ngrok-free.dev");
-                }
-                // Backup: nếu URL trả về đã có domain khác, giữ nguyên
-                else if (!imageUrl.startsWith("https://") && !imageUrl.startsWith("http://")) {
-                    // URL không hợp lệ, thêm prefix
-                    imageUrl = "https://soren-painted-erosely.ngrok-free.dev" + imageUrl;
-                }
-                
                 Log.d("ProfileActivity", "Loading avatar from: " + imageUrl);
                 
                 Glide.with(this)
@@ -337,7 +328,14 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void handleLogout() {
+        // Clear TokenManager
         tokenManager.clearAll();
+        
+        // Also clear SharedPrefManager (used by BookingConfirmActivity)
+        SharedPrefManager prefManager = SharedPrefManager.getInstance(this);
+        prefManager.logout();
+        
+        // Clear API token
         ApiClient.setAuthToken(null);
 
         Toast.makeText(this, "Đã đăng xuất", Toast.LENGTH_SHORT).show();

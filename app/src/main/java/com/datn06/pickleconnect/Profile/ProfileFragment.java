@@ -27,6 +27,7 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.datn06.pickleconnect.API.ApiClient;
+import com.datn06.pickleconnect.API.AppConfig;
 import com.datn06.pickleconnect.API.MemberApiService;
 import com.datn06.pickleconnect.API.ServiceHost;
 import com.datn06.pickleconnect.Common.BaseResponse;
@@ -406,14 +407,7 @@ public class ProfileFragment extends Fragment {
         if (data != null) {
 
             if (data.getAvatarUrl() != null && !data.getAvatarUrl().isEmpty()) {
-                String imageUrl = data.getAvatarUrl();
-
-                if (imageUrl.contains("localhost:9000")) {
-                    imageUrl = imageUrl.replace("http://localhost:9000", "https://soren-painted-erosely.ngrok-free.dev");
-                }
-                else if (!imageUrl.startsWith("https://") && !imageUrl.startsWith("http://")) {
-                    imageUrl = "https://soren-painted-erosely.ngrok-free.dev" + imageUrl;
-                }
+                String imageUrl = AppConfig.fixImageUrl(data.getAvatarUrl());
 
                 Log.d("ProfileFragment", "Loading avatar from: " + imageUrl);
 
@@ -584,8 +578,7 @@ public class ProfileFragment extends Fragment {
         String genderDisplay = spinnerGender.getText().toString().trim();
         String weightStr = etWeight.getText().toString().trim();
         String heightStr = etHeight.getText().toString().trim();
-        String imgurl = "test";
-
+        String imgurl =" ";
         Log.d("ProfileFragment", "=== UPDATE START ===");
         Log.d("ProfileFragment", "Display date: " + dateOfBirthDisplay);
         Log.d("ProfileFragment", "Weight input: " + weightStr);
