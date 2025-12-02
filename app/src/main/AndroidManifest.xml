@@ -22,6 +22,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PickleConnect">
         <activity
+            android:name=".tournament.TournamentRegistrationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".tournament.TournamentDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".tournament.TournamentListActivity"
             android:exported="false" />
         <activity

@@ -53,6 +53,28 @@ public class TourneyDetailResponse {
     @SerializedName("matchTypes")
     private List<MatchType> matchTypes;
 
+    public String getParticipationConditions() {
+        return participationConditions;
+    }
+
+    public void setParticipationConditions(String participationConditions) {
+        this.participationConditions = participationConditions;
+    }
+
+    @SerializedName("participationConditions")
+    private String participationConditions;
+
+    public String getParticipationRules() {
+        return participationRules;
+    }
+
+    public void setParticipationRules(String participationRules) {
+        this.participationRules = participationRules;
+    }
+
+    @SerializedName("participationRules")
+    private String participationRules;
+
     // Inner Classes
     public static class ImageList {
         @SerializedName("imageUrl")
@@ -331,6 +353,8 @@ public class TourneyDetailResponse {
         // You can implement date comparison logic here
         return true; // Placeholder
     }
+
+
 
     public int getParticipationPercentage() {
         try {

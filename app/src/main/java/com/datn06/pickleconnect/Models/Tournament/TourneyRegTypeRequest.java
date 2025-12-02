@@ -2,11 +2,7 @@ package com.datn06.pickleconnect.Models.Tournament;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Request for getting tournament registration form configuration
- * Endpoint: POST /tourney-reg-config
- */
-public class TourneyRegConfigRequest extends BaseTournamentRequest {
+public class TourneyRegTypeRequest extends BaseTournamentRequest {
 
     @SerializedName("tournamentId")
     private String tournamentId;
@@ -14,7 +10,7 @@ public class TourneyRegConfigRequest extends BaseTournamentRequest {
     /**
      * Default constructor
      */
-    public TourneyRegConfigRequest() {
+    public TourneyRegTypeRequest() {
         super();
     }
 
@@ -23,7 +19,7 @@ public class TourneyRegConfigRequest extends BaseTournamentRequest {
      * @param userId User ID (passed to BaseTournamentRequest)
      * @param tournamentId Tournament ID
      */
-    public TourneyRegConfigRequest(String userId, String tournamentId) {
+    public TourneyRegTypeRequest(String userId, String tournamentId) {
         super(userId); // Gọi BaseTournamentRequest(userId)
         this.tournamentId = tournamentId;
     }
@@ -37,3 +33,4 @@ public class TourneyRegConfigRequest extends BaseTournamentRequest {
         this.tournamentId = tournamentId;
     }
 }
+
