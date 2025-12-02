@@ -113,6 +113,71 @@ public class DynamicFormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         notifyDataSetChanged();
     }
 
+    // ✅ NEW: Validate tất cả các field và trả về field đầu tiên bị lỗi
+    public int validateAllFields() {
+        android.util.Log.d("DynamicFormAdapter", "╔════════════════════════════════════════════════════════════╗");
+        android.util.Log.d("DynamicFormAdapter", "║              validateAllFields() START                     ║");
+        android.util.Log.d("DynamicFormAdapter", "╚════════════════════════════════════════════════════════════╝");
+        android.util.Log.d("DynamicFormAdapter", "  Total fields: " + formFields.size());
+
+        for (int i = 0; i < formFields.size(); i++) {
+            TourneyRegConfigResponse field = formFields.get(i);
+
+            android.util.Log.d("DynamicFormAdapter", "  [" + i + "] Checking field: " + field.getFieldName());
+            android.util.Log.d("DynamicFormAdapter", "      Label: " + field.getLabel());
+            android.util.Log.d("DynamicFormAdapter", "      Type: " + field.getFieldType());
+            android.util.Log.d("DynamicFormAdapter", "      Required: " + field.getIsRequired());
+            android.util.Log.d("DynamicFormAdapter", "      Value: '" + field.getValue() + "'");
+
+            if (field.getIsRequired() != null && field.getIsRequired()) {
+                String value = field.getValue();
+
+                // Check if value is empty
+                if (value == null || value.trim().isEmpty()) {
+                    android.util.Log.e("DynamicFormAdapter", "  ✗ VALIDATION FAILED at position " + i);
+                    android.util.Log.e("DynamicFormAdapter", "      Reason: Required field is empty");
+                    return i; // Return position of first invalid field
+                }
+
+                // For checkbox, check if at least one is selected
+                if ("checkbox".equalsIgnoreCase(field.getFieldType())) {
+                    List<String> selectedValues = field.getSelectedValues();
+                    android.util.Log.d("DynamicFormAdapter", "      Selected values: " + selectedValues);
+
+                    if (selectedValues == null || selectedValues.isEmpty()) {
+                        android.util.Log.e("DynamicFormAdapter", "  ✗ VALIDATION FAILED at position " + i);
+                        android.util.Log.e("DynamicFormAdapter", "      Reason: Required checkbox has no selection");
+                        return i;
+                    }
+                }
+
+                // For select/spinner, check if default option is still selected
+                if ("select".equalsIgnoreCase(field.getFieldType())) {
+                    if (value.startsWith("Chọn ")) {
+                        android.util.Log.e("DynamicFormAdapter", "  ✗ VALIDATION FAILED at position " + i);
+                        android.util.Log.e("DynamicFormAdapter", "      Reason: Default option still selected");
+                        return i;
+                    }
+                }
+
+                android.util.Log.d("DynamicFormAdapter", "      ✓ Valid");
+            } else {
+                android.util.Log.d("DynamicFormAdapter", "      ⊘ Not required, skipped");
+            }
+        }
+
+        android.util.Log.d("DynamicFormAdapter", "  ✓ All fields validated successfully");
+        return -1; // All fields valid
+    }
+
+    // ✅ NEW: Get field at position để show error message
+    public TourneyRegConfigResponse getFieldAt(int position) {
+        if (position >= 0 && position < formFields.size()) {
+            return formFields.get(position);
+        }
+        return null;
+    }
+
     // ============================================
     // TextboxViewHolder
     // ============================================
@@ -120,37 +185,56 @@ public class DynamicFormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         TextView tvLabel;
         EditText etInput;
         TextView tvRequired;
+        TextView tvError; // ✅ NEW: Error message view
+
+        private TextWatcher textWatcher; // ✅ FIX: Store watcher to prevent multiple listeners
 
         public TextboxViewHolder(@NonNull View itemView) {
             super(itemView);
             tvLabel = itemView.findViewById(R.id.tvLabel);
             etInput = itemView.findViewById(R.id.etInput);
             tvRequired = itemView.findViewById(R.id.tvRequired);
+            // tvError = itemView.findViewById(R.id.tvError); // Add this to your layout if needed
         }
 
         public void bind(TourneyRegConfigResponse field) {
+            // ✅ FIX: Remove old text watcher before adding new one
+            if (textWatcher != null) {
+                etInput.removeTextChangedListener(textWatcher);
+            }
+
             // Set label
             tvLabel.setText(field.getLabel());
 
             // Show/hide required indicator
-            tvRequired.setVisibility(field.getIsRequired() ? View.VISIBLE : View.GONE);
+            tvRequired.setVisibility(
+                    (field.getIsRequired() != null && field.getIsRequired()) ? View.VISIBLE : View.GONE
+            );
 
             // Set input type based on field name
             setInputTypeByFieldName(field.getFieldName());
 
             // Set existing value
-            if (field.getValue() != null) {
-                etInput.setText(field.getValue());
+            String currentValue = field.getValue();
+            if (!etInput.getText().toString().equals(currentValue != null ? currentValue : "")) {
+                etInput.setText(currentValue);
             }
 
-            // Add text watcher
-            etInput.addTextChangedListener(new TextWatcher() {
+            // ✅ FIX: Create new text watcher
+            textWatcher = new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    field.setValue(s.toString());
+                    String newValue = s.toString().trim();
+                    field.setValue(newValue);
+
+                    // ✅ NEW: Clear error when user types
+                    if (tvError != null && !newValue.isEmpty()) {
+                        tvError.setVisibility(View.GONE);
+                    }
+
                     if (listener != null) {
                         listener.onFieldChanged(field);
                     }
@@ -158,7 +242,32 @@ public class DynamicFormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                 @Override
                 public void afterTextChanged(Editable s) {}
-            });
+            };
+
+            etInput.addTextChangedListener(textWatcher);
+
+            // ✅ NEW: Show error if field is invalid
+            boolean isRequired = field.getIsRequired() != null && field.getIsRequired();
+            if (isRequired && (currentValue == null || currentValue.trim().isEmpty())) {
+                showError("Vui lòng nhập " + field.getLabel().toLowerCase());
+            } else {
+                hideError();
+            }
+        }
+
+        private void showError(String message) {
+            if (tvError != null) {
+                tvError.setText(message);
+                tvError.setVisibility(View.VISIBLE);
+                etInput.setError(message); // Built-in Android error
+            }
+        }
+
+        private void hideError() {
+            if (tvError != null) {
+                tvError.setVisibility(View.GONE);
+            }
+            etInput.setError(null);
         }
 
         private void setInputTypeByFieldName(String fieldName) {
@@ -185,50 +294,78 @@ public class DynamicFormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         TextView tvLabel;
         Spinner spinner;
         TextView tvRequired;
+        TextView tvError;
+
+        private boolean isBinding = false; // ✅ FIX: Prevent listener trigger during bind
 
         public SelectViewHolder(@NonNull View itemView) {
             super(itemView);
             tvLabel = itemView.findViewById(R.id.tvLabel);
             spinner = itemView.findViewById(R.id.spinner);
             tvRequired = itemView.findViewById(R.id.tvRequired);
+            // tvError = itemView.findViewById(R.id.tvError);
         }
 
         public void bind(TourneyRegConfigResponse field) {
+            isBinding = true; // ✅ Prevent listener trigger
+
             tvLabel.setText(field.getLabel());
             tvRequired.setVisibility(field.getIsRequired() ? View.VISIBLE : View.GONE);
 
             List<String> options = field.getOptions();
             if (options != null && !options.isEmpty()) {
+                // ✅ Add default "Chọn..." option
+                List<String> spinnerOptions = new ArrayList<>();
+                spinnerOptions.add("Chọn " + field.getLabel().toLowerCase());
+                spinnerOptions.addAll(options);
+
                 ArrayAdapter<String> adapter = new ArrayAdapter<>(
                         itemView.getContext(),
                         android.R.layout.simple_spinner_item,
-                        options
+                        spinnerOptions
                 );
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spinner.setAdapter(adapter);
 
                 // Set selected value if exists
-                if (field.getValue() != null) {
+                int selectedPosition = 0; // Default to first item
+                if (field.getValue() != null && !field.getValue().isEmpty()) {
                     int position = options.indexOf(field.getValue());
                     if (position >= 0) {
-                        spinner.setSelection(position);
+                        selectedPosition = position + 1; // +1 because of default option
                     }
                 }
+                spinner.setSelection(selectedPosition);
 
-                // Listener
+                // ✅ FIX: Set listener after setting selection
                 spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
                     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                        field.setValue(options.get(position));
+                        if (isBinding) return; // Ignore during binding
+
+                        if (position == 0) {
+                            // Default option selected
+                            field.setValue("");
+                        } else {
+                            field.setValue(options.get(position - 1));
+                            if (tvError != null) {
+                                tvError.setVisibility(View.GONE);
+                            }
+                        }
+
                         if (listener != null) {
                             listener.onFieldChanged(field);
                         }
                     }
 
                     @Override
-                    public void onNothingSelected(AdapterView<?> parent) {}
+                    public void onNothingSelected(AdapterView<?> parent) {
+                        field.setValue("");
+                    }
                 });
             }
+
+            isBinding = false; // ✅ Re-enable listener
         }
     }
 
@@ -239,19 +376,26 @@ public class DynamicFormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         TextView tvLabel;
         RadioGroup radioGroup;
         TextView tvRequired;
+        TextView tvError;
+
+        private boolean isBinding = false;
 
         public RadioViewHolder(@NonNull View itemView) {
             super(itemView);
             tvLabel = itemView.findViewById(R.id.tvLabel);
             radioGroup = itemView.findViewById(R.id.radioGroup);
             tvRequired = itemView.findViewById(R.id.tvRequired);
+            // tvError = itemView.findViewById(R.id.tvError);
         }
 
         public void bind(TourneyRegConfigResponse field) {
+            isBinding = true;
+
             tvLabel.setText(field.getLabel());
             tvRequired.setVisibility(field.getIsRequired() ? View.VISIBLE : View.GONE);
 
             radioGroup.removeAllViews();
+            radioGroup.clearCheck();
 
             List<String> options = field.getOptions();
             if (options != null && !options.isEmpty()) {
@@ -270,15 +414,22 @@ public class DynamicFormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 }
 
                 radioGroup.setOnCheckedChangeListener((group, checkedId) -> {
+                    if (isBinding) return;
+
                     RadioButton selected = group.findViewById(checkedId);
                     if (selected != null) {
                         field.setValue(selected.getText().toString());
+                        if (tvError != null) {
+                            tvError.setVisibility(View.GONE);
+                        }
                         if (listener != null) {
                             listener.onFieldChanged(field);
                         }
                     }
                 });
             }
+
+            isBinding = false;
         }
     }
 
@@ -289,15 +440,21 @@ public class DynamicFormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         TextView tvLabel;
         LinearLayout checkboxContainer;
         TextView tvRequired;
+        TextView tvError;
+
+        private boolean isBinding = false;
 
         public CheckboxViewHolder(@NonNull View itemView) {
             super(itemView);
             tvLabel = itemView.findViewById(R.id.tvLabel);
             checkboxContainer = itemView.findViewById(R.id.checkboxContainer);
             tvRequired = itemView.findViewById(R.id.tvRequired);
+            // tvError = itemView.findViewById(R.id.tvError);
         }
 
         public void bind(TourneyRegConfigResponse field) {
+            isBinding = true;
+
             tvLabel.setText(field.getLabel());
             tvRequired.setVisibility(field.getIsRequired() ? View.VISIBLE : View.GONE);
 
@@ -320,6 +477,8 @@ public class DynamicFormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                     List<String> finalSelectedValues = selectedValues;
                     checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                        if (isBinding) return;
+
                         if (isChecked) {
                             if (!finalSelectedValues.contains(option)) {
                                 finalSelectedValues.add(option);
@@ -331,6 +490,10 @@ public class DynamicFormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                         // Update value as comma-separated string
                         field.setValue(String.join(",", finalSelectedValues));
 
+                        if (!finalSelectedValues.isEmpty() && tvError != null) {
+                            tvError.setVisibility(View.GONE);
+                        }
+
                         if (listener != null) {
                             listener.onFieldChanged(field);
                         }
@@ -339,6 +502,8 @@ public class DynamicFormAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                     checkboxContainer.addView(checkBox);
                 }
             }
+
+            isBinding = false;
         }
     }
 }

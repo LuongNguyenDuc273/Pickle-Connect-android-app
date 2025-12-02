@@ -634,9 +634,41 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
         Log.d(TAG, "║                 handleSubmit() START                       ║");
         Log.d(TAG, "╚════════════════════════════════════════════════════════════╝");
 
-        // Validate dynamic form fields
-        if (!validateForm()) {
-            return;
+        // ✅ DEBUG: Check if form fields are loaded
+        Log.d(TAG, "  Form fields count: " + (formFields != null ? formFields.size() : 0));
+        if (formFields != null) {
+            for (TourneyRegConfigResponse field : formFields) {
+                Log.d(TAG, "    Field: " + field.getFieldName() +
+                        ", Required: " + field.getIsRequired() +
+                        ", Value: '" + field.getValue() + "'");
+            }
+        }
+
+        // ✅ NEW: Validate dynamic form fields using adapter
+        if (formFields != null && !formFields.isEmpty()) {
+            int invalidFieldPosition = dynamicFormAdapter.validateAllFields();
+
+            if (invalidFieldPosition != -1) {
+                // ✅ Scroll to invalid field
+                rvDynamicForm.smoothScrollToPosition(invalidFieldPosition);
+
+                // ✅ Get field info to show specific error
+                TourneyRegConfigResponse invalidField = dynamicFormAdapter.getFieldAt(invalidFieldPosition);
+                if (invalidField != null) {
+                    String errorMsg = "Vui lòng nhập: " + invalidField.getLabel();
+                    Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
+                    Log.d(TAG, "  ✗ Validation failed at position " + invalidFieldPosition);
+                    Log.d(TAG, "      Field: " + invalidField.getFieldName());
+                    Log.d(TAG, "      Required: " + invalidField.getIsRequired());
+                    Log.d(TAG, "      Current value: '" + invalidField.getValue() + "'");
+                }
+
+                return;
+            }
+
+            Log.d(TAG, "  ✓ All dynamic form fields validated successfully");
+        } else {
+            Log.w(TAG, "  ⚠ Warning: No dynamic form fields to validate");
         }
 
         // Validate terms checkbox
@@ -644,6 +676,9 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
             Toast.makeText(this,
                     "Vui lòng đồng ý với chính sách chia sẻ dữ liệu và bảo mật",
                     Toast.LENGTH_SHORT).show();
+
+            // ✅ Scroll to terms checkbox
+            cbTerms.requestFocus();
             return;
         }
 
@@ -651,6 +686,7 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
         int selectedPosition = spinnerRegType.getSelectedItemPosition();
         if (selectedPosition < 0 || selectedPosition >= matchTypeList.size()) {
             Toast.makeText(this, "Vui lòng chọn nội dung thi đấu", Toast.LENGTH_SHORT).show();
+            spinnerRegType.requestFocus();
             return;
         }
 
