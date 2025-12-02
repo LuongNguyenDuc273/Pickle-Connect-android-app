@@ -169,7 +169,7 @@
                     android:layout_marginBottom="16dp"
                     android:background="#E0E0E0" />
 
-                <!-- Dynamic Player Information Section -->
+                <!-- Fixed Player Information Section -->
                 <TextView
                     android:id="@+id/tvPlayerInfoLabel"
                     android:layout_width="wrap_content"
@@ -178,7 +178,125 @@
                     android:textColor="#000000"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    android:visibility="gone" />
+                    android:visibility="visible" />
+
+                <!-- Full Name -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Họ và tên"
+                    android:textColor="#000000"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/etFullName"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/edittext_background"
+                    android:hint="Nhập họ và tên"
+                    android:inputType="textPersonName"
+                    android:padding="12dp"
+                    android:textColor="#000000"
+                    android:textColorHint="#999999"
+                    android:textSize="14sp" />
+
+                <!-- Phone Number -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Số điện thoại"
+                    android:textColor="#000000"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/etPhone"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/edittext_background"
+                    android:hint="Nhập số điện thoại"
+                    android:inputType="phone"
+                    android:padding="12dp"
+                    android:textColor="#000000"
+                    android:textColorHint="#999999"
+                    android:textSize="14sp" />
+
+                <!-- Email -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Email"
+                    android:textColor="#000000"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/etEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/edittext_background"
+                    android:hint="Nhập email"
+                    android:inputType="textEmailAddress"
+                    android:padding="12dp"
+                    android:textColor="#000000"
+                    android:textColorHint="#999999"
+                    android:textSize="14sp" />
+
+                <!-- Gender -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Giới tính"
+                    android:textColor="#000000"
+                    android:textSize="14sp" />
+
+                <RadioGroup
+                    android:id="@+id/rgGender"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <RadioButton
+                        android:id="@+id/rbMale"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Nam"
+                        android:checked="true"
+                        android:buttonTint="#00BFA5" />
+
+                    <RadioButton
+                        android:id="@+id/rbFemale"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Nữ"
+                        android:buttonTint="#00BFA5" />
+                </RadioGroup>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="#E0E0E0" />
+
+                <!-- Dynamic Form Questions Section -->
+                <TextView
+                    android:id="@+id/tvDynamicFormLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="FORM CÂU HỎI"
+                    android:textColor="#000000"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="visible" />
 
                 <!-- RecyclerView for Dynamic Form -->
                 <androidx.recyclerview.widget.RecyclerView
@@ -188,6 +306,33 @@
                     android:layout_marginTop="16dp"
                     android:visibility="gone"
                     android:nestedScrollingEnabled="false" />
+
+                <!-- Terms and Conditions Checkbox -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal"
+                    android:gravity="start">
+
+                    <CheckBox
+                        android:id="@+id/cbTerms"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="#00BFA5"
+                        android:checked="false" />
+
+                    <TextView
+                        android:id="@+id/tvTerms"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:textSize="13sp"
+                        android:textColor="#666666"
+                        android:lineSpacingExtra="2dp"
+                        android:text="Tôi xác nhận đồng ý với Chính sách chia sẻ dữ liệu và bảo mật của Pickle Connect" />
+                </LinearLayout>
 
                 <!-- Loading Indicator -->
                 <ProgressBar

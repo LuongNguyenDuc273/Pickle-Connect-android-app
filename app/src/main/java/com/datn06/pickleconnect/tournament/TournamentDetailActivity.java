@@ -254,6 +254,12 @@ public class TournamentDetailActivity extends AppCompatActivity {
         String participationConditions = detail.getParticipationConditions();
         if (participationConditions != null && !participationConditions.isEmpty()) {
             tvParticipationConditions.setText(participationConditions);
+
+            // ✅ Parse và log registration fee
+            double regFee = detail.parseRegistrationFee();
+            String formattedFee = detail.getFormattedRegistrationFee();
+            Log.d(TAG, "  ✓ Parsed registration fee: " + regFee);
+            Log.d(TAG, "  ✓ Formatted fee: " + formattedFee);
             Log.d(TAG, "  ✓ Participation conditions set from API");
         } else {
             // Fallback to default conditions
@@ -471,7 +477,6 @@ public class TournamentDetailActivity extends AppCompatActivity {
         Intent intent = new Intent(this, TournamentRegistrationActivity.class);
 
         // Pass tournament data
-        // Pass tournament data
         intent.putExtra("tournamentId", tournamentId);
         intent.putExtra("tournamentName", tournamentDetail.getTournamentName());
         intent.putExtra("tournamentDate", formatDateRange(
@@ -480,6 +485,11 @@ public class TournamentDetailActivity extends AppCompatActivity {
         ));
         intent.putExtra("tournamentLocation", tournamentDetail.getTournamentLocation());
         intent.putExtra("organizerName", tournamentDetail.getOrganizerName());
+
+        // ✅ Pass registration fee từ participationConditions
+        double registrationFee = tournamentDetail.parseRegistrationFee();
+        intent.putExtra("registrationFee", String.valueOf(registrationFee));
+        Log.d(TAG, "  ✓ Registration Fee test: " + String.valueOf(registrationFee));
 
         Log.d(TAG, "  ✓ Starting TournamentRegistrationActivity");
         startActivity(intent);
