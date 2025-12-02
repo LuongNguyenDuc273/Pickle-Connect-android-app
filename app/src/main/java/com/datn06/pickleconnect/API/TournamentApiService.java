@@ -1,6 +1,8 @@
 package com.datn06.pickleconnect.API;
 import com.datn06.pickleconnect.Common.BaseResponse;
+import com.datn06.pickleconnect.Model.PaymentUrlResponse;
 import com.datn06.pickleconnect.Models.Tournament.*;
+
 
 import java.util.List;
 
@@ -45,4 +47,31 @@ public interface TournamentApiService {
     Call<BaseResponse<List<TourneyRegConfigResponse>>> getTourneyRegConfig(
             @Body TourneyRegConfigRequest request
     );
+
+    /**
+     * Get tournament registration types (match types)
+     * Endpoint: POST /tourney-reg-type
+     */
+    @POST("api-andr/tourney-reg-type")
+    Call<BaseResponse<TourneyRegTypeResponse>> getTourneyRegType(
+            @Body TourneyRegTypeRequest request
+    );
+
+    /**
+     * Register for tournament
+     * Endpoint: POST /tourney-reg
+     */
+//    @POST("api-andr/tourney-reg")
+//    Call<BaseResponse<TourneyRegResponse>> registerTourney(
+//            @Body TourneyRegRequest request
+//    );
+
+    /**
+     * Initialize tournament registration payment
+     * Endpoint: POST /tourney-reg-init
+     */
+//    @POST("api-andr/tourney-reg-init")
+//    Call<BaseResponse<PaymentUrlResponse>> initTourneyPayment(
+//            @Body TourneyRegInitRequest request
+//    );
 }

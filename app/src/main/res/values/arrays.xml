@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="team_options">
+        <item>Đơn Nam</item>
+        <item>Đơn Nữ</item>
+        <item>Đôi Nam</item>
+        <item>Đôi Nữ</item>
+        <item>Đôi Nam Nữ</item>
+    </string-array>
+</resources>

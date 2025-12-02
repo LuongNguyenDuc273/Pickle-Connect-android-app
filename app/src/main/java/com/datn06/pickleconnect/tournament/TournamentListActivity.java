@@ -219,7 +219,9 @@ public class TournamentListActivity extends AppCompatActivity {
         // Item click listener
         tournamentAdapter.setOnTournamentClickListener(tournament -> {
             Log.d(TAG, "Tournament clicked: " + tournament.getTournamentName());
-            Intent intent = new Intent(TournamentListActivity.this, HomeActivity.class);
+
+            // Chuyển sang TournamentDetailActivity thay vì HomeActivity
+            Intent intent = new Intent(TournamentListActivity.this, TournamentDetailActivity.class);
             intent.putExtra("tournamentId", tournament.getTournamentId());
             startActivity(intent);
         });

@@ -53,6 +53,29 @@ public class TourneyDetailResponse {
     @SerializedName("matchTypes")
     private List<MatchType> matchTypes;
 
+
+    public String getParticipationConditions() {
+        return participationConditions;
+    }
+
+    public void setParticipationConditions(String participationConditions) {
+        this.participationConditions = participationConditions;
+    }
+
+    @SerializedName("participationConditions")
+    private String participationConditions;
+
+    public String getParticipationRules() {
+        return participationRules;
+    }
+
+    public void setParticipationRules(String participationRules) {
+        this.participationRules = participationRules;
+    }
+
+    @SerializedName("participationRules")
+    private String participationRules;
+
     // Inner Classes
     public static class ImageList {
         @SerializedName("imageUrl")
@@ -331,6 +354,62 @@ public class TourneyDetailResponse {
         // You can implement date comparison logic here
         return true; // Placeholder
     }
+
+    /**
+     * Parse registration fee from participationConditions string
+     * Format expected: "• Phí tham gia: 70,000 VNĐ"
+     * @return registration fee as double, or 0 if not found
+     */
+    public double parseRegistrationFee() {
+        if (participationConditions == null || participationConditions.isEmpty()) {
+            return 0.0;
+        }
+
+        try {
+            // Find line containing "Phí tham gia"
+            String[] lines = participationConditions.split("\n");
+            for (String line : lines) {
+                if (line.contains("Phí tham gia:") || line.contains("phí tham gia:")) {
+                    // Extract number from line
+                    // Example: "• Phí tham gia: 70,000 VNĐ" -> "70,000"
+
+                    // Remove bullet point and label
+                    String feeText = line.replaceAll(".*[Pp]hí tham gia:\\s*", "");
+
+                    // Remove "VNĐ" and any trailing text
+                    feeText = feeText.replaceAll("\\s*VN[DĐ].*", "");
+
+                    // Remove commas and dots (thousands separator)
+                    feeText = feeText.replaceAll("[,.]", "").trim();
+
+                    // Parse to double
+                    return Double.parseDouble(feeText);
+                }
+            }
+        } catch (Exception e) {
+            // If parsing fails, return 0
+            return 0.0;
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Get formatted registration fee string
+     * @return formatted fee like "70,000 VNĐ" or "Đang cập nhật"
+     */
+    public String getFormattedRegistrationFee() {
+        double fee = parseRegistrationFee();
+        if (fee == 0.0) {
+            return "Đang cập nhật";
+        }
+
+        // Format with thousands separator
+        java.text.NumberFormat formatter = java.text.NumberFormat.getNumberInstance(new java.util.Locale("vi", "VN"));
+        return formatter.format(fee) + " VNĐ";
+    }
+
+
 
     public int getParticipationPercentage() {
         try {

@@ -7,122 +7,62 @@ import java.util.List;
  * Response for tournament registration form field configuration
  */
 public class TourneyRegConfigResponse {
-
     @SerializedName("formFieldId")
     private String formFieldId;
 
     @SerializedName("tournamentId")
     private String tournamentId;
 
-    @SerializedName("label")
-    private String label; // Display label for the field
-
     @SerializedName("fieldName")
-    private String fieldName; // Internal field name
+    private String fieldName;
 
     @SerializedName("fieldType")
-    private String fieldType; // text, number, date, select, radio, checkbox, etc.
+    private String fieldType; // textbox, select, checkbox, radio
+
+    @SerializedName("label")
+    private String label;
 
     @SerializedName("isRequired")
     private Boolean isRequired;
 
     @SerializedName("options")
-    private List<String> options; // For select/radio/checkbox fields
+    private List<String> options;
 
     @SerializedName("displayOrder")
-    private Integer displayOrder;
+    private String displayOrder;
+
+    // Field value được user nhập (không từ API)
+    private String value;
+    private List<String> selectedValues; // For checkbox
 
     // Getters and Setters
-    public String getFormFieldId() {
-        return formFieldId;
-    }
+    public String getFormFieldId() { return formFieldId; }
+    public void setFormFieldId(String formFieldId) { this.formFieldId = formFieldId; }
 
-    public void setFormFieldId(String formFieldId) {
-        this.formFieldId = formFieldId;
-    }
+    public String getTournamentId() { return tournamentId; }
+    public void setTournamentId(String tournamentId) { this.tournamentId = tournamentId; }
 
-    public String getTournamentId() {
-        return tournamentId;
-    }
+    public String getFieldName() { return fieldName; }
+    public void setFieldName(String fieldName) { this.fieldName = fieldName; }
 
-    public void setTournamentId(String tournamentId) {
-        this.tournamentId = tournamentId;
-    }
+    public String getFieldType() { return fieldType; }
+    public void setFieldType(String fieldType) { this.fieldType = fieldType; }
 
-    public String getLabel() {
-        return label;
-    }
+    public String getLabel() { return label; }
+    public void setLabel(String label) { this.label = label; }
 
-    public void setLabel(String label) {
-        this.label = label;
-    }
+    public Boolean getIsRequired() { return isRequired != null ? isRequired : false; }
+    public void setIsRequired(Boolean isRequired) { this.isRequired = isRequired; }
 
-    public String getFieldName() {
-        return fieldName;
-    }
+    public List<String> getOptions() { return options; }
+    public void setOptions(List<String> options) { this.options = options; }
 
-    public void setFieldName(String fieldName) {
-        this.fieldName = fieldName;
-    }
+    public String getDisplayOrder() { return displayOrder; }
+    public void setDisplayOrder(String displayOrder) { this.displayOrder = displayOrder; }
 
-    public String getFieldType() {
-        return fieldType;
-    }
+    public String getValue() { return value; }
+    public void setValue(String value) { this.value = value; }
 
-    public void setFieldType(String fieldType) {
-        this.fieldType = fieldType;
-    }
-
-    public Boolean getIsRequired() {
-        return isRequired;
-    }
-
-    public void setIsRequired(Boolean isRequired) {
-        this.isRequired = isRequired;
-    }
-
-    public List<String> getOptions() {
-        return options;
-    }
-
-    public void setOptions(List<String> options) {
-        this.options = options;
-    }
-
-    public Integer getDisplayOrder() {
-        return displayOrder;
-    }
-
-    public void setDisplayOrder(Integer displayOrder) {
-        this.displayOrder = displayOrder;
-    }
-
-    // Helper methods
-    public boolean isSelectType() {
-        return "select".equalsIgnoreCase(fieldType);
-    }
-
-    public boolean isTextType() {
-        return "text".equalsIgnoreCase(fieldType);
-    }
-
-    public boolean isNumberType() {
-        return "number".equalsIgnoreCase(fieldType);
-    }
-
-    public boolean isDateType() {
-        return "date".equalsIgnoreCase(fieldType);
-    }
-
-    public boolean isRadioType() {
-        return "radio".equalsIgnoreCase(fieldType);
-    }
-
-    public boolean isCheckboxType() {
-        return "checkbox".equalsIgnoreCase(fieldType);
-    }
-
-    public boolean hasOptions() {
-        return options != null && !options.isEmpty();
-    }
+    public List<String> getSelectedValues() { return selectedValues; }
+    public void setSelectedValues(List<String> selectedValues) { this.selectedValues = selectedValues; }
 }
