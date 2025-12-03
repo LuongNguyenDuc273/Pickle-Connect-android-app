@@ -3,8 +3,10 @@ package com.datn06.pickleconnect.tournament;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
@@ -30,6 +32,12 @@ import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import android.app.DatePickerDialog;
+import java.text.SimpleDateFormat;
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 
 public class TournamentRegistrationActivity extends AppCompatActivity {
 
@@ -50,6 +58,7 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
     // Views - Fixed Player Information
     private TextView tvPlayerInfoLabel;
     private EditText etFullName;
+    private EditText etDateOfBirth;
     private EditText etPhone;
     private EditText etEmail;
     private RadioGroup rgGender;
@@ -70,12 +79,24 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
     private TournamentApiService tournamentApiService;
     private MemberApiService memberApiService;
 
+    private TextView tvErrorFullName;
+    private TextView tvErrorDateOfBirth;
+    private TextView tvErrorPhone;
+    private TextView tvErrorEmail;
+    private TextView tvErrorGender;
+    private TextView tvErrorMatchType;
+    private TextView tvErrorTerms;
+
     // Data
     private String tournamentId;
     private String tournamentName;
     private String tournamentDetailId;
     private String currentUserId;
     private TokenManager tokenManager;
+    private SimpleDateFormat displayFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+    private SimpleDateFormat apiFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+    private SimpleDateFormat apiFormatWithDash = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
+    private SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
 
     private List<TourneyDetailResponse.MatchType> matchTypeList = new ArrayList<>();
     private List<TourneyRegConfigResponse> formFields = new ArrayList<>();
@@ -95,6 +116,7 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
         setupListeners();
         setupRecyclerView();
         setupTermsAndConditions();
+        setupDatePicker();
 
         if (tournamentId != null && !tournamentId.isEmpty()) {
             // ✅ Load user info first, then load match types
@@ -124,11 +146,21 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
         // Fixed Player Information
         tvPlayerInfoLabel = findViewById(R.id.tvPlayerInfoLabel);
         etFullName = findViewById(R.id.etFullName);
+        etDateOfBirth = findViewById(R.id.etDateOfBirth);
         etPhone = findViewById(R.id.etPhone);
         etEmail = findViewById(R.id.etEmail);
         rgGender = findViewById(R.id.rgGender);
         rbMale = findViewById(R.id.rbMale);
         rbFemale = findViewById(R.id.rbFemale);
+
+        // ✅ THÊM CÁC ERROR TEXTVIEW
+        tvErrorFullName = findViewById(R.id.tvErrorFullName);
+        tvErrorDateOfBirth = findViewById(R.id.tvErrorDateOfBirth);
+        tvErrorPhone = findViewById(R.id.tvErrorPhone);
+        tvErrorEmail = findViewById(R.id.tvErrorEmail);
+        tvErrorGender = findViewById(R.id.tvErrorGender);
+        tvErrorMatchType = findViewById(R.id.tvErrorMatchType);
+        tvErrorTerms = findViewById(R.id.tvErrorTerms);
 
         // Dynamic Form
         rvDynamicForm = findViewById(R.id.rvDynamicForm);
@@ -211,21 +243,75 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
     private void setupListeners() {
         Log.d(TAG, "▶ setupListeners()");
 
-        btnBack.setOnClickListener(v -> {
-            Log.d(TAG, "  Back button clicked");
-            finish();
+        btnBack.setOnClickListener(v -> finish());
+
+        // ✅ Ẩn lỗi khi người dùng bắt đầu nhập
+        etFullName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                hideFieldError(tvErrorFullName);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        etDateOfBirth.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                hideFieldError(tvErrorDateOfBirth);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        etPhone.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                hideFieldError(tvErrorPhone);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        etEmail.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                hideFieldError(tvErrorEmail);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        rgGender.setOnCheckedChangeListener((group, checkedId) -> {
+            hideFieldError(tvErrorGender);
+        });
+
+        cbTerms.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            hideFieldError(tvErrorTerms);
         });
 
         spinnerRegType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                hideFieldError(tvErrorMatchType);
                 if (position >= 0 && position < matchTypeList.size()) {
                     TourneyDetailResponse.MatchType selectedType = matchTypeList.get(position);
-                    String matchTypeCode = selectedType.getMatchTypeCode();
-
-                    Log.d(TAG, "  Match type selected: " + selectedType.getMatchTypeName());
-                    Log.d(TAG, "  Match type code: " + matchTypeCode);
-
                     loadFormConfig();
                 }
             }
@@ -234,10 +320,7 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        btnSubmit.setOnClickListener(v -> {
-            Log.d(TAG, "  Submit button clicked");
-            handleSubmit();
-        });
+        btnSubmit.setOnClickListener(v -> handleSubmit());
     }
 
     private void setupRecyclerView() {
@@ -292,6 +375,49 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
         tvTerms.setHighlightColor(Color.TRANSPARENT); // Bỏ highlight khi click
 
         Log.d(TAG, "  ✓ Terms and Conditions setup complete");
+    }
+
+    private void setupDatePicker() {
+        Log.d(TAG, "▶ setupDatePicker()");
+
+        etDateOfBirth.setOnClickListener(v -> {
+            Calendar calendar = Calendar.getInstance();
+
+            // Nếu đã có ngày được chọn, sử dụng ngày đó
+            String currentDate = etDateOfBirth.getText().toString().trim();
+            if (!currentDate.isEmpty()) {
+                try {
+                    Date date = displayFormat.parse(currentDate);
+                    if (date != null) {
+                        calendar.setTime(date);
+                    }
+                } catch (ParseException e) {
+                    Log.e(TAG, "Error parsing date: " + e.getMessage());
+                }
+            }
+
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+            DatePickerDialog datePickerDialog = new DatePickerDialog(
+                    this,
+                    (view, selectedYear, selectedMonth, selectedDay) -> {
+                        // Format: dd/MM/yyyy
+                        String dateDisplay = String.format(Locale.getDefault(), "%02d/%02d/%04d",
+                                selectedDay, selectedMonth + 1, selectedYear);
+                        etDateOfBirth.setText(dateDisplay);
+                        Log.d(TAG, "  Date selected: " + dateDisplay);
+                    },
+                    year, month, day
+            );
+
+            // Không cho chọn ngày trong tương lai
+            datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+            datePickerDialog.show();
+        });
+
+        Log.d(TAG, "  ✓ DatePicker setup complete");
     }
 
     // ============================================
@@ -389,21 +515,52 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
         // Set full name
         if (data.getFullName() != null && !data.getFullName().isEmpty()) {
             etFullName.setText(data.getFullName());
-            etFullName.setEnabled(false); // Make read-only
             Log.d(TAG, "  ✓ Full Name: " + data.getFullName());
+        }
+
+        // Set date of birth - THÊM MỚI
+        if (data.getDateOfBirth() != null && !data.getDateOfBirth().isEmpty()) {
+            String dobString = data.getDateOfBirth();
+            Date date = null;
+
+            Log.d(TAG, "  DOB from API: " + dobString);
+
+            // Try parsing with different formats
+            try {
+                date = apiFormatWithDash.parse(dobString); // dd-MM-yyyy
+                Log.d(TAG, "  ✅ Parsed with dd-MM-yyyy");
+            } catch (ParseException e) {
+                try {
+                    date = dbFormat.parse(dobString); // yyyy-MM-dd HH:mm:ss.SSS
+                    Log.d(TAG, "  ✅ Parsed with yyyy-MM-dd HH:mm:ss.SSS");
+                } catch (ParseException e2) {
+                    try {
+                        date = apiFormat.parse(dobString); // yyyy-MM-dd
+                        Log.d(TAG, "  ✅ Parsed with yyyy-MM-dd");
+                    } catch (ParseException e3) {
+                        Log.e(TAG, "  All date formats failed for: " + dobString);
+                    }
+                }
+            }
+
+            if (date != null) {
+                String displayDate = displayFormat.format(date); // dd/MM/yyyy
+                etDateOfBirth.setText(displayDate);
+                Log.d(TAG, "  ✓ Date of Birth: " + displayDate);
+            } else {
+                etDateOfBirth.setText(dobString);
+            }
         }
 
         // Set phone number
         if (data.getPhoneNumber() != null && !data.getPhoneNumber().isEmpty()) {
             etPhone.setText(data.getPhoneNumber());
-            etPhone.setEnabled(false); // Make read-only
             Log.d(TAG, "  ✓ Phone: " + data.getPhoneNumber());
         }
 
         // Set email
         if (data.getEmail() != null && !data.getEmail().isEmpty()) {
             etEmail.setText(data.getEmail());
-            etEmail.setEnabled(false); // Make read-only
             Log.d(TAG, "  ✓ Email: " + data.getEmail());
         }
 
@@ -417,15 +574,10 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
                 rbFemale.setChecked(true);
             }
 
-            // Make radio group read-only
-            rgGender.setEnabled(false);
-            rbMale.setEnabled(false);
-            rbFemale.setEnabled(false);
-
             Log.d(TAG, "  ✓ Gender: " + genderDisplay);
         }
 
-        Log.d(TAG, "  ✓ Fixed fields populated successfully");
+        Log.d(TAG, "  ✓ Fixed fields populated successfully (editable)");
     }
 
     /**
@@ -551,6 +703,7 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
             }
 
             matchTypeNames.add(displayText);
+            Log.d(TAG, "▶ matchtype:"+matchTypeNames);
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
@@ -634,88 +787,65 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
         Log.d(TAG, "║                 handleSubmit() START                       ║");
         Log.d(TAG, "╚════════════════════════════════════════════════════════════╝");
 
-        // ✅ DEBUG: Check if form fields are loaded
-        Log.d(TAG, "  Form fields count: " + (formFields != null ? formFields.size() : 0));
-        if (formFields != null) {
-            for (TourneyRegConfigResponse field : formFields) {
-                Log.d(TAG, "    Field: " + field.getFieldName() +
-                        ", Required: " + field.getIsRequired() +
-                        ", Value: '" + field.getValue() + "'");
-            }
-        }
+        // ✅ Ẩn tất cả lỗi trước khi validate
+        hideAllErrors();
 
-        // ✅ NEW: Validate dynamic form fields using adapter
-        if (formFields != null && !formFields.isEmpty()) {
-            int invalidFieldPosition = dynamicFormAdapter.validateAllFields();
-
-            if (invalidFieldPosition != -1) {
-                // ✅ Scroll to invalid field
-                rvDynamicForm.smoothScrollToPosition(invalidFieldPosition);
-
-                // ✅ Get field info to show specific error
-                TourneyRegConfigResponse invalidField = dynamicFormAdapter.getFieldAt(invalidFieldPosition);
-                if (invalidField != null) {
-                    String errorMsg = "Vui lòng nhập: " + invalidField.getLabel();
-                    Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
-                    Log.d(TAG, "  ✗ Validation failed at position " + invalidFieldPosition);
-                    Log.d(TAG, "      Field: " + invalidField.getFieldName());
-                    Log.d(TAG, "      Required: " + invalidField.getIsRequired());
-                    Log.d(TAG, "      Current value: '" + invalidField.getValue() + "'");
-                }
-
-                return;
-            }
-
-            Log.d(TAG, "  ✓ All dynamic form fields validated successfully");
-        } else {
-            Log.w(TAG, "  ⚠ Warning: No dynamic form fields to validate");
-        }
-
-        // Validate terms checkbox
-        if (!cbTerms.isChecked()) {
-            Toast.makeText(this,
-                    "Vui lòng đồng ý với chính sách chia sẻ dữ liệu và bảo mật",
-                    Toast.LENGTH_SHORT).show();
-
-            // ✅ Scroll to terms checkbox
-            cbTerms.requestFocus();
-            return;
-        }
-
-        // Check if match type is full
+        // ✅ 1. Validate match type selection
         int selectedPosition = spinnerRegType.getSelectedItemPosition();
         if (selectedPosition < 0 || selectedPosition >= matchTypeList.size()) {
-            Toast.makeText(this, "Vui lòng chọn nội dung thi đấu", Toast.LENGTH_SHORT).show();
+            showFieldError(tvErrorMatchType, "Vui lòng chọn nội dung thi đấu");
             spinnerRegType.requestFocus();
             return;
         }
 
         TourneyDetailResponse.MatchType selectedType = matchTypeList.get(selectedPosition);
 
+        // ✅ 2. Check if match type is full
         if (selectedType.isFull()) {
-            Toast.makeText(this,
-                    "Nội dung thi đấu này đã đầy. Vui lòng chọn nội dung khác.",
-                    Toast.LENGTH_LONG).show();
+            showFieldError(tvErrorMatchType, "Nội dung thi đấu này đã đầy. Vui lòng chọn nội dung khác.");
+            spinnerRegType.requestFocus();
             return;
         }
 
-        Log.d(TAG, "  Selected match type: " + selectedType.getMatchTypeName());
-        Log.d(TAG, "  Match type code: " + selectedType.getMatchTypeCode());
-
-        // Show fixed form data (from API)
-        Log.d(TAG, "  Fixed Form Data (from API):");
-        Log.d(TAG, "    Full Name: " + etFullName.getText().toString().trim());
-        Log.d(TAG, "    Phone: " + etPhone.getText().toString().trim());
-        Log.d(TAG, "    Email: " + etEmail.getText().toString().trim());
-        Log.d(TAG, "    Gender: " + (rbMale.isChecked() ? "Nam" : "Nữ"));
-
-        // Show dynamic form data
-        Log.d(TAG, "  Dynamic Form Data:");
-        for (TourneyRegConfigResponse field : formFields) {
-            Log.d(TAG, "    " + field.getFieldName() + " = " + field.getValue());
+        // ✅ 3. Validate fixed fields
+        if (!validateFixedFields()) {
+            return;
         }
 
-        // ✅ Navigate to Confirmation Activity
+        // ✅ 4. Validate giới tính theo match type
+        if (!validateGenderByMatchType(selectedType)) {
+            return;
+        }
+
+        // ✅ 5. Validate độ tuổi theo match type
+        if (!validateAgeByMatchType(selectedType)) {
+            return;
+        }
+
+        // ✅ 6. Validate dynamic form fields
+        if (formFields != null && !formFields.isEmpty()) {
+            int invalidFieldPosition = dynamicFormAdapter.validateAllFields();
+
+            if (invalidFieldPosition != -1) {
+                rvDynamicForm.smoothScrollToPosition(invalidFieldPosition);
+                TourneyRegConfigResponse invalidField = dynamicFormAdapter.getFieldAt(invalidFieldPosition);
+                if (invalidField != null) {
+                    Toast.makeText(this, "Vui lòng nhập: " + invalidField.getLabel(), Toast.LENGTH_LONG).show();
+                    Log.d(TAG, "  ✗ Validation failed at position " + invalidFieldPosition);
+                }
+                return;
+            }
+            Log.d(TAG, "  ✓ All dynamic form fields validated successfully");
+        }
+
+        // ✅ 7. Validate terms checkbox
+        if (!cbTerms.isChecked()) {
+            showFieldError(tvErrorTerms, "Vui lòng đồng ý với chính sách chia sẻ dữ liệu và bảo mật");
+            cbTerms.requestFocus();
+            return;
+        }
+
+        Log.d(TAG, "  ✓ All validations passed");
         navigateToConfirmation(selectedType);
     }
 
@@ -736,11 +866,10 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
         intent.putExtra("tournamentLocation", getIntent().getStringExtra("tournamentLocation"));
 
         // Match Type Info
-        //intent.putExtra("matchTypeId", selectedMatchType.getTournamentDetailId());
         intent.putExtra("matchTypeName", selectedMatchType.getMatchTypeName());
         intent.putExtra("matchTypeCode", selectedMatchType.getMatchTypeCode());
 
-        // ✅ Ưu tiên lấy từ matchType, nếu không có thì dùng từ participationConditions
+        // Registration Fee
         String feeToUse = getIntent().getStringExtra("registrationFee");
         if (feeToUse == null || feeToUse.isEmpty() || "0".equals(feeToUse)) {
             feeToUse = String.valueOf(registrationFee);
@@ -750,6 +879,7 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
 
         // Player Info (Fixed Fields)
         intent.putExtra("playerName", etFullName.getText().toString().trim());
+        intent.putExtra("playerDateOfBirth", etDateOfBirth.getText().toString().trim()); // ✅ THÊM MỚI
         intent.putExtra("playerPhone", etPhone.getText().toString().trim());
         intent.putExtra("playerEmail", etEmail.getText().toString().trim());
         intent.putExtra("playerGender", rbMale.isChecked() ? "Nam" : "Nữ");
@@ -796,6 +926,286 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
         return true;
     }
 
+    private boolean validateGenderByMatchType(TourneyDetailResponse.MatchType matchType) {
+        String matchTypeName = matchType.getMatchTypeName().toLowerCase();
+        boolean isMaleSelected = rbMale.isChecked();
+        boolean isFemaleSelected = rbFemale.isChecked();
+
+        Log.d(TAG, "▶ validateGenderByMatchType()");
+
+        if (!isMaleSelected && !isFemaleSelected) {
+            showFieldError(tvErrorGender, "Vui lòng chọn giới tính");
+            rgGender.requestFocus();
+            return false;
+        }
+
+        if (matchTypeName.contains("đơn nam") || matchTypeName.contains("nam đơn")) {
+            if (!isMaleSelected) {
+                showFieldError(tvErrorGender, "Nội dung Đơn Nam yêu cầu giới tính phải là Nam");
+                rgGender.requestFocus();
+                return false;
+            }
+        } else if (matchTypeName.contains("đơn nữ") || matchTypeName.contains("nữ đơn")) {
+            if (!isFemaleSelected) {
+                showFieldError(tvErrorGender, "Nội dung Đơn Nữ yêu cầu giới tính phải là Nữ");
+                rgGender.requestFocus();
+                return false;
+            }
+        } else if (matchTypeName.contains("đôi nam") || matchTypeName.contains("nam đôi")) {
+            if (!isMaleSelected) {
+                showFieldError(tvErrorGender, "Nội dung Đôi Nam yêu cầu giới tính phải là Nam");
+                rgGender.requestFocus();
+                return false;
+            }
+        } else if (matchTypeName.contains("đôi nữ") || matchTypeName.contains("nữ đôi")) {
+            if (!isFemaleSelected) {
+                showFieldError(tvErrorGender, "Nội dung Đôi Nữ yêu cầu giới tính phải là Nữ");
+                rgGender.requestFocus();
+                return false;
+            }
+        }
+
+        Log.d(TAG, "  ✓ Gender validation passed");
+        return true;
+    }
+
+    private boolean validateFixedFields() {
+        Log.d(TAG, "▶ validateFixedFields()");
+
+        // Validate Full Name
+        String fullName = etFullName.getText().toString().trim();
+        if (fullName.isEmpty()) {
+            showFieldError(tvErrorFullName, "Vui lòng nhập họ và tên");
+            etFullName.requestFocus();
+            return false;
+        }
+
+        if (fullName.split("\\s+").length < 2) {
+            showFieldError(tvErrorFullName, "Vui lòng nhập họ và tên đầy đủ");
+            etFullName.requestFocus();
+            return false;
+        }
+
+        // Validate Date of Birth
+        String dateOfBirth = etDateOfBirth.getText().toString().trim();
+        if (dateOfBirth.isEmpty()) {
+            showFieldError(tvErrorDateOfBirth, "Vui lòng chọn ngày sinh");
+            etDateOfBirth.requestFocus();
+            return false;
+        }
+
+        int age = calculateAge(dateOfBirth);
+        if (age < 5) {
+            showFieldError(tvErrorDateOfBirth, "Độ tuổi không hợp lệ (quá nhỏ)");
+            etDateOfBirth.requestFocus();
+            return false;
+        }
+        if (age > 100) {
+            showFieldError(tvErrorDateOfBirth, "Độ tuổi không hợp lệ (quá lớn)");
+            etDateOfBirth.requestFocus();
+            return false;
+        }
+
+        // Validate Phone
+        String phone = etPhone.getText().toString().trim();
+        if (phone.isEmpty()) {
+            showFieldError(tvErrorPhone, "Vui lòng nhập số điện thoại");
+            etPhone.requestFocus();
+            return false;
+        }
+
+        if (!validatePhoneNumber(phone)) {
+            showFieldError(tvErrorPhone, "Số điện thoại không đúng định dạng (VD: 0901234567)");
+            etPhone.requestFocus();
+            return false;
+        }
+
+        // Validate Email
+        String email = etEmail.getText().toString().trim();
+        if (email.isEmpty()) {
+            showFieldError(tvErrorEmail, "Vui lòng nhập email");
+            etEmail.requestFocus();
+            return false;
+        }
+
+        if (!validateEmailFormat(email)) {
+            showFieldError(tvErrorEmail, "Email không đúng định dạng (VD: example@gmail.com)");
+            etEmail.requestFocus();
+            return false;
+        }
+
+        Log.d(TAG, "  ✓ Fixed fields validation passed");
+        return true;
+    }
+
+    private boolean validatePhoneNumber(String phone) {
+        Log.d(TAG, "▶ validatePhoneNumber()");
+
+        if (phone == null || phone.isEmpty()) {
+            return false;
+        }
+
+        // Remove spaces and special characters
+        phone = phone.replaceAll("[\\s\\-()]", "");
+
+        // Regex cho số điện thoại Việt Nam:
+        // - Bắt đầu bằng 0 hoặc +84 hoặc 84
+        // - Theo sau là 9 chữ số
+        // Ví dụ: 0901234567, +84901234567, 84901234567
+        String phoneRegex = "^(0|\\+84|84)[0-9]{9}$";
+
+        boolean isValid = phone.matches(phoneRegex);
+
+        if (!isValid) {
+            Log.d(TAG, "  ✗ Invalid phone format: " + phone);
+        } else {
+            Log.d(TAG, "  ✓ Valid phone format");
+        }
+
+        return isValid;
+    }
+
+    private boolean validateEmailFormat(String email) {
+        Log.d(TAG, "▶ validateEmailFormat()");
+
+        if (email == null || email.isEmpty()) {
+            return false;
+        }
+
+        // Sử dụng Android's built-in pattern + thêm regex chi tiết hơn
+        boolean isValidPattern = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
+
+        // Thêm validation cho các trường hợp đặc biệt
+        boolean hasValidFormat = email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+
+        // Kiểm tra không có ký tự đặc biệt không hợp lệ
+        boolean noInvalidChars = !email.contains("..") &&
+                !email.startsWith(".") &&
+                !email.endsWith(".");
+
+        boolean isValid = isValidPattern && hasValidFormat && noInvalidChars;
+
+        if (!isValid) {
+            Log.d(TAG, "  ✗ Invalid email format: " + email);
+        } else {
+            Log.d(TAG, "  ✓ Valid email format");
+        }
+
+        return isValid;
+    }
+
+    private int[] extractAgeRangeFromMatchType(String matchTypeName) {
+        Log.d(TAG, "▶ extractAgeRangeFromMatchType()");
+        Log.d(TAG, "  Match Type Name: " + matchTypeName);
+
+        try {
+            // Regex để tìm pattern U<min>->U<max>
+            String agePattern = "U(\\d+)->U(\\d+)";
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(agePattern);
+            java.util.regex.Matcher matcher = pattern.matcher(matchTypeName);
+
+            if (matcher.find()) {
+                int minAge = Integer.parseInt(matcher.group(1));
+                int maxAge = Integer.parseInt(matcher.group(2));
+
+                Log.d(TAG, "  ✓ Age range found: " + minAge + " - " + maxAge);
+                return new int[]{minAge, maxAge};
+            }
+
+            // Kiểm tra pattern khác: U<age> (chỉ có một độ tuổi)
+            String singleAgePattern = "U(\\d+)";
+            pattern = java.util.regex.Pattern.compile(singleAgePattern);
+            matcher = pattern.matcher(matchTypeName);
+
+            if (matcher.find()) {
+                int age = Integer.parseInt(matcher.group(1));
+                Log.d(TAG, "  ✓ Single age limit found: U" + age);
+                return new int[]{0, age}; // Từ 0 đến age
+            }
+
+            Log.d(TAG, "  ℹ No age restriction found");
+            return null; // Không có giới hạn độ tuổi
+
+        } catch (Exception e) {
+            Log.e(TAG, "  ✗ Error extracting age range: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private int calculateAge(String dateOfBirthStr) {
+        Log.d(TAG, "▶ calculateAge()");
+
+        try {
+            Date dateOfBirth = displayFormat.parse(dateOfBirthStr); // dd/MM/yyyy
+
+            if (dateOfBirth == null) {
+                Log.e(TAG, "  ✗ Cannot parse date: " + dateOfBirthStr);
+                return -1;
+            }
+
+            Calendar birthCalendar = Calendar.getInstance();
+            birthCalendar.setTime(dateOfBirth);
+
+            Calendar today = Calendar.getInstance();
+
+            int age = today.get(Calendar.YEAR) - birthCalendar.get(Calendar.YEAR);
+
+            // Kiểm tra nếu chưa đến sinh nhật trong năm nay
+            if (today.get(Calendar.MONTH) < birthCalendar.get(Calendar.MONTH) ||
+                    (today.get(Calendar.MONTH) == birthCalendar.get(Calendar.MONTH) &&
+                            today.get(Calendar.DAY_OF_MONTH) < birthCalendar.get(Calendar.DAY_OF_MONTH))) {
+                age--;
+            }
+
+            Log.d(TAG, "  ✓ Age calculated: " + age);
+            return age;
+
+        } catch (ParseException e) {
+            Log.e(TAG, "  ✗ Error parsing date: " + e.getMessage());
+            return -1;
+        }
+    }
+
+    private boolean validateAgeByMatchType(TourneyDetailResponse.MatchType matchType) {
+        Log.d(TAG, "▶ validateAgeByMatchType()");
+
+        String dateOfBirthStr = etDateOfBirth.getText().toString().trim();
+
+        if (dateOfBirthStr.isEmpty()) {
+            showFieldError(tvErrorDateOfBirth, "Vui lòng chọn ngày sinh");
+            etDateOfBirth.requestFocus();
+            return false;
+        }
+
+        int age = calculateAge(dateOfBirthStr);
+
+        if (age < 0) {
+            showFieldError(tvErrorDateOfBirth, "Ngày sinh không hợp lệ");
+            etDateOfBirth.requestFocus();
+            return false;
+        }
+
+        int[] ageRange = extractAgeRangeFromMatchType(matchType.getMatchTypeName());
+
+        if (ageRange == null) {
+            return true;
+        }
+
+        int minAge = ageRange[0];
+        int maxAge = ageRange[1];
+
+        if (age < minAge || age > maxAge) {
+            String errorMsg = String.format("Độ tuổi của bạn (%d tuổi) không phù hợp (yêu cầu: %d - %d tuổi)",
+                    age, minAge, maxAge);
+            showFieldError(tvErrorDateOfBirth, errorMsg);
+            etDateOfBirth.requestFocus();
+            return false;
+        }
+
+        Log.d(TAG, "  ✓ Age validation passed");
+        return true;
+    }
+
     // ============================================
     // UI HELPERS
     // ============================================
@@ -813,5 +1223,28 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
             Toast.makeText(this, message, Toast.LENGTH_LONG).show();
             Log.e(TAG, "  Error: " + message);
         });
+    }
+
+    private void showFieldError(TextView errorTextView, String message) {
+        if (errorTextView != null) {
+            errorTextView.setText(message);
+            errorTextView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void hideFieldError(TextView errorTextView) {
+        if (errorTextView != null) {
+            errorTextView.setVisibility(View.GONE);
+        }
+    }
+
+    private void hideAllErrors() {
+        hideFieldError(tvErrorFullName);
+        hideFieldError(tvErrorDateOfBirth);
+        hideFieldError(tvErrorPhone);
+        hideFieldError(tvErrorEmail);
+        hideFieldError(tvErrorGender);
+        hideFieldError(tvErrorMatchType);
+        hideFieldError(tvErrorTerms);
     }
 }
