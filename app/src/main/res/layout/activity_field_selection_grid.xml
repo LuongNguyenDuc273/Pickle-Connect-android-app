@@ -48,29 +48,30 @@
             </LinearLayout>
 
             <!-- Tabs (Dịch kèo sẵn / Đặt kèo tự tạo) -->
+
+            <!-- Date Picker Section -->
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tabLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:tabMode="fixed"
                 app:tabGravity="fill"
-                app:tabSelectedTextColor="#00BCD4"
                 app:tabIndicatorColor="#00BCD4"
+                app:tabMode="fixed"
+                app:tabSelectedTextColor="#00BCD4"
                 app:tabTextColor="@android:color/black">
 
                 <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Dịch kèo sẵn Booking" />
+                    android:text="Đặt sân" />
 
                 <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Đặt kèo tự tạo" />
+                    android:text="Đặt sự kiện" />
             </com.google.android.material.tabs.TabLayout>
 
-            <!-- Date Picker Section -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -148,9 +149,9 @@
                         android:id="@+id/btnZoomOut"
                         android:layout_width="36dp"
                         android:layout_height="36dp"
-                        android:src="@android:drawable/ic_menu_close_clear_cancel"
+                        android:src="@drawable/ic_minus"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        android:tint="#00BCD4"
+                        app:tint="#00BCD4"
                         android:contentDescription="Zoom Out"
                         android:scaleType="fitCenter"
                         android:padding="8dp" />
@@ -161,7 +162,7 @@
                         android:layout_height="36dp"
                         android:src="@android:drawable/ic_menu_add"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        android:tint="#00BCD4"
+                        app:tint="#00BCD4"
                         android:contentDescription="Zoom In"
                         android:scaleType="fitCenter"
                         android:padding="8dp"
