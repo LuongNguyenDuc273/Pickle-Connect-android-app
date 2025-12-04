@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -162,6 +163,20 @@
                     android:background="@drawable/spinner_background"
                     android:padding="12dp" />
 
+                <!-- ✅ ERROR: Match Type -->
+                <TextView
+                    android:id="@+id/tvErrorMatchType"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#F44336"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:paddingTop="4dp"
+                    tools:text="Vui lòng chọn nội dung thi đấu"
+                    tools:visibility="visible"/>
+
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
@@ -202,6 +217,60 @@
                     android:textColorHint="#999999"
                     android:textSize="14sp" />
 
+                <!-- ✅ ERROR: Full Name -->
+                <TextView
+                    android:id="@+id/tvErrorFullName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#F44336"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:paddingTop="4dp"
+                    tools:text="Vui lòng nhập họ và tên"
+                    tools:visibility="visible"/>
+
+                <!-- Date of Birth -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Ngày sinh"
+                    android:textColor="#000000"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/etDateOfBirth"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/edittext_background"
+                    android:hint="Chọn ngày sinh"
+                    android:inputType="none"
+                    android:focusable="false"
+                    android:clickable="true"
+                    android:padding="12dp"
+                    android:textColor="#000000"
+                    android:textColorHint="#999999"
+                    android:textSize="14sp"
+                    android:drawableEnd="@drawable/ic_calendar"
+                    android:drawablePadding="8dp" />
+
+                <!-- ✅ ERROR: Date of Birth -->
+                <TextView
+                    android:id="@+id/tvErrorDateOfBirth"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#F44336"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:paddingTop="4dp"
+                    tools:text="Vui lòng chọn ngày sinh"
+                    tools:visibility="visible"/>
+
                 <!-- Phone Number -->
                 <TextView
                     android:layout_width="wrap_content"
@@ -224,6 +293,20 @@
                     android:textColorHint="#999999"
                     android:textSize="14sp" />
 
+                <!-- ✅ ERROR: Phone -->
+                <TextView
+                    android:id="@+id/tvErrorPhone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#F44336"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:paddingTop="4dp"
+                    tools:text="Vui lòng nhập số điện thoại"
+                    tools:visibility="visible"/>
+
                 <!-- Email -->
                 <TextView
                     android:layout_width="wrap_content"
@@ -245,6 +328,20 @@
                     android:textColor="#000000"
                     android:textColorHint="#999999"
                     android:textSize="14sp" />
+
+                <!-- ✅ ERROR: Email -->
+                <TextView
+                    android:id="@+id/tvErrorEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#F44336"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:paddingTop="4dp"
+                    tools:text="Vui lòng nhập email"
+                    tools:visibility="visible"/>
 
                 <!-- Gender -->
                 <TextView
@@ -279,6 +376,20 @@
                         android:text="Nữ"
                         android:buttonTint="#00BFA5" />
                 </RadioGroup>
+
+                <!-- ✅ ERROR: Gender -->
+                <TextView
+                    android:id="@+id/tvErrorGender"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#F44336"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:paddingTop="4dp"
+                    tools:text="Vui lòng chọn giới tính"
+                    tools:visibility="visible"/>
 
                 <View
                     android:layout_width="match_parent"
@@ -333,6 +444,20 @@
                         android:lineSpacingExtra="2dp"
                         android:text="Tôi xác nhận đồng ý với Chính sách chia sẻ dữ liệu và bảo mật của Pickle Connect" />
                 </LinearLayout>
+
+                <!-- ✅ ERROR: Terms -->
+                <TextView
+                    android:id="@+id/tvErrorTerms"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#F44336"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:paddingTop="4dp"
+                    tools:text="Vui lòng đồng ý với chính sách"
+                    tools:visibility="visible"/>
 
                 <!-- Loading Indicator -->
                 <ProgressBar

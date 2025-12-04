@@ -1,14 +1,20 @@
 package com.datn06.pickleconnect.Map;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -18,6 +24,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.API.ApiService;
 import com.datn06.pickleconnect.API.ServiceHost;
+import com.datn06.pickleconnect.Booking.FieldSelectionActivity;
 import com.datn06.pickleconnect.Model.FacilityDTO;
 import com.datn06.pickleconnect.Home.HomeResponse;
 import com.datn06.pickleconnect.R;
@@ -50,14 +57,22 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private FusedLocationProviderClient fusedLocationClient;
     private CancellationTokenSource cancellationTokenSource;
 
-    // ✅ UPDATED: Kept as field for consistency
     private ApiService apiService;
-
     private LoadingDialog loadingDialog;
 
     private double currentLat = DEFAULT_LAT;
     private double currentLng = DEFAULT_LNG;
     private Marker currentLocationMarker;
+
+    // UI components
+    private ImageButton btnBack;
+    private CardView facilityInfoCard;
+    private TextView tvFacilityName;
+    private TextView tvFacilityAddress;
+    private TextView tvFacilityDistance;
+    private Button btnBookFacility;
+
+    private FacilityDTO selectedFacility;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +85,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             return insets;
         });
 
-        // ✅ ADDED: Initialize API Service first
+        initViews();
         initApiService();
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -84,7 +99,35 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     }
 
-    // ✅ ADDED: Initialize API Service with correct port
+    private void initViews() {
+        // Back button
+        btnBack = findViewById(R.id.btnBack);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> finish());
+        }
+
+        // Facility info card
+        facilityInfoCard = findViewById(R.id.facilityInfoCard);
+        tvFacilityName = findViewById(R.id.tvFacilityName);
+        tvFacilityAddress = findViewById(R.id.tvFacilityAddress);
+        tvFacilityDistance = findViewById(R.id.tvFacilityDistance);
+        btnBookFacility = findViewById(R.id.btnBookFacility);
+
+        // Hide info card initially
+        if (facilityInfoCard != null) {
+            facilityInfoCard.setVisibility(View.GONE);
+        }
+
+        // Setup book button click listener
+        if (btnBookFacility != null) {
+            btnBookFacility.setOnClickListener(v -> {
+                if (selectedFacility != null) {
+                    openFieldSelection(selectedFacility);
+                }
+            });
+        }
+    }
+
     private void initApiService() {
         apiService = ApiClient.createService(ServiceHost.API_SERVICE, ApiService.class);
         Log.d(TAG, "API Service initialized for port 9003 (MapActivity)");
@@ -98,13 +141,24 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
         mMap.getUiSettings().setCompassEnabled(true);
 
-        mMap.setOnInfoWindowClickListener(marker -> {
+        // Show facility info when marker is clicked
+        mMap.setOnMarkerClickListener(marker -> {
             Object tag = marker.getTag();
             if (tag instanceof FacilityDTO) {
                 FacilityDTO facility = (FacilityDTO) tag;
-                Toast.makeText(this, "Facility ID: " + facility.getFacilityId(), Toast.LENGTH_SHORT).show();
+                showFacilityInfo(facility);
+
+                // Move camera to marker
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                        marker.getPosition(), 15f));
+
+                return true; // Consume the event
             }
+            return false; // Default behavior for other markers
         });
+
+        // Hide info card when map is clicked
+        mMap.setOnMapClickListener(latLng -> hideFacilityInfo());
 
         if (checkLocationPermission()) {
             enableMyLocation();
@@ -112,6 +166,49 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         } else {
             requestLocationPermission();
         }
+    }
+
+    private void showFacilityInfo(FacilityDTO facility) {
+        selectedFacility = facility;
+
+        if (facilityInfoCard != null) {
+            facilityInfoCard.setVisibility(View.VISIBLE);
+        }
+
+        if (tvFacilityName != null) {
+            tvFacilityName.setText(facility.getFacilityName());
+        }
+
+        if (tvFacilityAddress != null) {
+            tvFacilityAddress.setText(facility.getFullAddress());
+        }
+
+        if (tvFacilityDistance != null && facility.getDistanceKm() != null) {
+            tvFacilityDistance.setText(String.format("Cách bạn: %.1f km", facility.getDistanceKm()));
+            tvFacilityDistance.setVisibility(View.VISIBLE);
+        } else if (tvFacilityDistance != null) {
+            tvFacilityDistance.setVisibility(View.GONE);
+        }
+
+        Log.d(TAG, "Showing info for: " + facility.getFacilityName());
+    }
+
+    private void hideFacilityInfo() {
+        if (facilityInfoCard != null) {
+            facilityInfoCard.setVisibility(View.GONE);
+        }
+        selectedFacility = null;
+    }
+
+    private void openFieldSelection(FacilityDTO facility) {
+        Intent intent = new Intent(MapActivity.this, FieldSelectionActivity.class);
+        intent.putExtra("facilityId", facility.getFacilityId());
+        intent.putExtra("facilityName", facility.getFacilityName());
+
+        Log.d(TAG, "Opening FieldSelectionActivity for facility: " + facility.getFacilityName());
+
+        startActivity(intent);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private boolean checkLocationPermission() {
@@ -209,7 +306,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void loadFacilities() {
-        // ✅ FIXED: Use the initialized apiService with correct port
         apiService.getHomePageData(currentLat, currentLng)
                 .enqueue(new Callback<HomeResponse>() {
                     @Override
@@ -252,17 +348,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             if (facility.getLatitude() != null && facility.getLongitude() != null) {
                 LatLng position = new LatLng(facility.getLatitude(), facility.getLongitude());
 
-                String snippet = facility.getFullAddress();
-                if (facility.getDistanceKm() != null) {
-                    snippet += "\nCách bạn: " + String.format("%.1f km", facility.getDistanceKm());
-                }
-
                 Marker marker = mMap.addMarker(new MarkerOptions()
                         .position(position)
                         .title(facility.getFacilityName())
-                        .snippet(snippet)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
 
+                // Store facility in marker tag for click handling
                 marker.setTag(facility);
             }
         }

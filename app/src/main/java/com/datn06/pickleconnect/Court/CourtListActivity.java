@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -12,6 +13,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,6 +25,8 @@ import com.datn06.pickleconnect.Model.FacilityDTO;
 import com.datn06.pickleconnect.Model.FacilitySearchResponse;
 import com.datn06.pickleconnect.Model.SearchCourtRequest;
 import com.datn06.pickleconnect.R;
+import com.datn06.pickleconnect.Menu.MenuNavigation;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.chip.Chip;
 
 import java.math.BigDecimal;
@@ -43,16 +47,19 @@ public class CourtListActivity extends AppCompatActivity {
     private RecyclerView rvCourts;
     private ProgressBar progressBar;
     private TextView tvNoResults;
+    private BottomNavigationView bottomNavigation;
 
     private CourtAdapter courtAdapter;
     private List<FacilityDTO> courtList = new ArrayList<>();
-    
+
     private SearchCourtRequest currentSearchRequest;
     private boolean isShowingSaved = false;
-    
+
     // Vị trí người dùng
     private double userLatitude = 21.0285;  // Mặc định Hà Nội
     private double userLongitude = 105.8542;
+
+    private MenuNavigation menuNavigation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,13 +71,16 @@ public class CourtListActivity extends AppCompatActivity {
         // Lấy vị trí từ Intent
         userLatitude = getIntent().getDoubleExtra("userLatitude", 21.0285);
         userLongitude = getIntent().getDoubleExtra("userLongitude", 105.8542);
-        
+
         Log.d(TAG, "User location: " + userLatitude + ", " + userLongitude);
 
         initViews();
         setupRecyclerView();
         setupListeners();
-        
+        setupBottomNavigation();
+
+        menuNavigation = new MenuNavigation(this);
+
         // Initial load - ALL courts (no filter)
         loadAllCourts();
     }
@@ -86,6 +96,7 @@ public class CourtListActivity extends AppCompatActivity {
         rvCourts = findViewById(R.id.rvCourts);
         progressBar = findViewById(R.id.progressBar);
         tvNoResults = findViewById(R.id.tvNoResults);
+        bottomNavigation = findViewById(R.id.bottomNavigation);
     }
 
     private void setupRecyclerView() {
@@ -93,7 +104,6 @@ public class CourtListActivity extends AppCompatActivity {
             @Override
             public void onCourtClick(FacilityDTO facility) {
                 // Navigate to court detail
-                // TODO: Open CourtDetailActivity
                 Toast.makeText(CourtListActivity.this, "Xem chi tiết: " + facility.getFacilityName(), Toast.LENGTH_SHORT).show();
             }
 
@@ -101,8 +111,8 @@ public class CourtListActivity extends AppCompatActivity {
             public void onBookNowClick(FacilityDTO facility) {
                 // This callback is no longer used - CourtAdapter handles it directly
             }
-        }, this);  // ← Thêm context (this)
-        
+        }, this);
+
         rvCourts.setLayoutManager(new LinearLayoutManager(this));
         rvCourts.setAdapter(courtAdapter);
     }
@@ -110,10 +120,8 @@ public class CourtListActivity extends AppCompatActivity {
     private void setupListeners() {
         btnBack.setOnClickListener(v -> finish());
 
-        btnMap.setOnClickListener(v -> {
-            // TODO: Open map view
-            Toast.makeText(this, "Chức năng bản đồ đang phát triển", Toast.LENGTH_SHORT).show();
-        });
+        // Giữ nguyên nút Map ở top bar
+        btnMap.setOnClickListener(v -> openMapActivity());
 
         btnHistory.setOnClickListener(v -> {
             Intent intent = new Intent(this, com.datn06.pickleconnect.Booking.BookingHistoryActivity.class);
@@ -157,17 +165,43 @@ public class CourtListActivity extends AppCompatActivity {
         });
     }
 
+    private void setupBottomNavigation() {
+        if (bottomNavigation != null) {
+            bottomNavigation.setSelectedItemId(R.id.nav_booking);
+
+            bottomNavigation.setOnItemSelectedListener(new BottomNavigationView.OnItemSelectedListener() {
+                @Override
+                public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                    int itemId = item.getItemId();
+
+                    if (itemId == R.id.nav_booking) {
+                        return true;
+                    } else {
+                        menuNavigation.navigateTo(itemId);
+                        return true;
+                    }
+                }
+            });
+        }
+    }
+
+    private void openMapActivity() {
+        Intent intent = new Intent(CourtListActivity.this, com.datn06.pickleconnect.Map.MapActivity.class);
+        startActivity(intent);
+        overridePendingTransition(0, 0);
+    }
+
     /**
      * Load ALL courts (no filter) - Màn hình mặc định
      */
     private void loadAllCourts() {
         Log.d(TAG, "loadAllCourts called");
-        
+
         currentSearchRequest = SearchCourtRequest.builder()
                 .page(0)
-                .size(100)  // Load nhiều hơn để hiện all
+                .size(100)
                 .build();
-        
+
         Log.d(TAG, "Request: Load ALL courts (no filters)");
         performSearch(currentSearchRequest);
     }
@@ -177,15 +211,15 @@ public class CourtListActivity extends AppCompatActivity {
      */
     private void searchNearbyCourts() {
         Log.d(TAG, "searchNearbyCourts called");
-        
+
         currentSearchRequest = SearchCourtRequest.builder()
                 .userLatitude(roundToDecimal(userLatitude, 6))
                 .userLongitude(roundToDecimal(userLongitude, 6))
-                .maxDistanceKm(50.0)  // Tìm trong bán kính 50km
+                .maxDistanceKm(50.0)
                 .page(0)
                 .size(20)
                 .build();
-        
+
         Log.d(TAG, "Request: lat=" + userLatitude + ", lng=" + userLongitude + ", maxDist=50km");
         performSearch(currentSearchRequest);
     }
@@ -195,34 +229,34 @@ public class CourtListActivity extends AppCompatActivity {
      */
     private void searchCourtsByName(String name) {
         Log.d(TAG, "searchCourtsByName: " + name);
-        
+
         currentSearchRequest = SearchCourtRequest.builder()
                 .facilityName(name)
                 .page(0)
                 .size(50)
                 .build();
-        
+
         performSearch(currentSearchRequest);
     }
 
     private void performSearch(SearchCourtRequest request) {
         Log.d(TAG, "performSearch START");
         showLoading(true);
-        
+
         CourtApiService apiService = ApiClient.createService(ServiceHost.COURT_SERVICE, CourtApiService.class);
         Log.d(TAG, "API Service URL: " + ServiceHost.COURT_SERVICE);
-        
+
         apiService.searchCourts(request).enqueue(new Callback<FacilitySearchResponse>() {
             @Override
             public void onResponse(Call<FacilitySearchResponse> call, Response<FacilitySearchResponse> response) {
                 showLoading(false);
                 Log.d(TAG, "API Response code: " + response.code());
-                
+
                 if (response.isSuccessful() && response.body() != null) {
                     FacilitySearchResponse searchResponse = response.body();
-                    Log.d(TAG, "Response success! Facilities count: " + 
-                          (searchResponse.getFacilities() != null ? searchResponse.getFacilities().size() : 0));
-                    
+                    Log.d(TAG, "Response success! Facilities count: " +
+                            (searchResponse.getFacilities() != null ? searchResponse.getFacilities().size() : 0));
+
                     if (searchResponse.getFacilities() != null && !searchResponse.getFacilities().isEmpty()) {
                         courtList.clear();
                         courtList.addAll(searchResponse.getFacilities());
@@ -236,7 +270,7 @@ public class CourtListActivity extends AppCompatActivity {
                         Log.w(TAG, "No facilities found");
                     }
                 } else {
-                    Log.e(TAG, "API Response failed: code=" + response.code() + ", body=" + response.body());
+                    Log.e(TAG, "API Response failed: code=" + response.code());
                     Toast.makeText(CourtListActivity.this, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -251,7 +285,6 @@ public class CourtListActivity extends AppCompatActivity {
     }
 
     private void loadSavedCourts() {
-        // Navigate to SavedCourtsActivity
         Intent intent = new Intent(this, SavedCourtsActivity.class);
         startActivity(intent);
     }
@@ -274,13 +307,7 @@ public class CourtListActivity extends AppCompatActivity {
         tvNoResults.setVisibility(show ? View.VISIBLE : View.GONE);
         rvCourts.setVisibility(show ? View.GONE : View.VISIBLE);
     }
-    
-    /**
-     * Làm tròn double thành BigDecimal với số chữ số thập phân cố định
-     * Backend validation yêu cầu:
-     * - Latitude: tối đa 2 chữ số nguyên + 6 chữ số thập phân (vd: 21.024505)
-     * - Longitude: tối đa 3 chữ số nguyên + 6 chữ số thập phân (vd: 105.826387)
-     */
+
     private BigDecimal roundToDecimal(double value, int scale) {
         return BigDecimal.valueOf(value).setScale(scale, RoundingMode.HALF_UP);
     }
