@@ -55,52 +55,18 @@
                 android:layout_height="1dp"
                 android:layout_weight="1"/>
 
-            <!-- Notification Icon với badge -->
-            <FrameLayout
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginEnd="8dp">
-
-                <androidx.cardview.widget.CardView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_gravity="center"
-                    app:cardCornerRadius="24dp"
-                    app:cardElevation="0dp"
-                    app:cardBackgroundColor="#FFFFFF">
-
-                    <ImageView
-                        android:id="@+id/ivNotification"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_notification"
-                        android:contentDescription="Thông báo"/>
-                </androidx.cardview.widget.CardView>
-
-                <TextView
-                    android:id="@+id/tvNotificationBadge"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="top|end"
-                    android:layout_marginTop="6dp"
-                    android:layout_marginEnd="6dp"
-                    android:background="@drawable/bg_badge"
-                    android:gravity="center"
-                    android:text="5"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp"
-                    android:textStyle="bold"/>
-            </FrameLayout>
-
-            <!-- Profile Avatar -->
+            <!-- ✅ REMOVED: Notification Icon -->
+            <!-- Profile Avatar - Click to open ProfileActivity -->
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/ivProfile"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:src="@drawable/avartar_placeholder"
+                android:clickable="true"
+                android:focusable="true"
                 app:civ_border_width="2dp"
-                app:civ_border_color="#FFFFFF"/>
+                app:civ_border_color="#FFFFFF"
+                android:contentDescription="Hồ sơ"/>
         </LinearLayout>
 
         <!-- Search Bar trong gradient -->
@@ -215,7 +181,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-
                 android:nestedScrollingEnabled="false"
                 tools:listitem="@layout/item_sports_venue"/>
 

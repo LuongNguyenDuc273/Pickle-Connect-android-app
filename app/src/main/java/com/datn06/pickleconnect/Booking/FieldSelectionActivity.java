@@ -334,10 +334,10 @@ public class FieldSelectionActivity extends AppCompatActivity {
         TextView cell = new TextView(this);
         cell.setText(text);
         cell.setGravity(Gravity.CENTER);
-        cell.setTextSize(12);
+        cell.setTextSize(getHeaderTextSize()); // ← Sửa: Text size tự động
         cell.setTextColor(Color.BLACK);
         cell.setBackgroundColor(Color.parseColor("#F5F5F5"));
-        cell.setPadding(dpToPx(4), dpToPx(8), dpToPx(4), dpToPx(8));
+        cell.setPadding(dpToPx(2), dpToPx(8), dpToPx(2), dpToPx(8));
 
         // Add border
         cell.setBackground(ContextCompat.getDrawable(this, R.drawable.cell_border));
@@ -352,7 +352,7 @@ public class FieldSelectionActivity extends AppCompatActivity {
         TextView cell = new TextView(this);
         cell.setText(fieldName);
         cell.setGravity(Gravity.CENTER);
-        cell.setTextSize(14);
+        cell.setTextSize(getFieldNameTextSize()); // ← Sửa: Text size tự động
         cell.setTextColor(Color.BLACK);
         cell.setTypeface(null, android.graphics.Typeface.BOLD);
         cell.setLayoutParams(new LinearLayout.LayoutParams(
@@ -375,12 +375,12 @@ public class FieldSelectionActivity extends AppCompatActivity {
     private TextView createSlotCell(TimeSlotDTO slot, FieldAvailabilityDTO field) {
         TextView cell = new TextView(this);
         cell.setGravity(Gravity.CENTER);
-        cell.setTextSize(10);
+        cell.setTextSize(getSlotTextSize()); // ← Sửa: Text size tự động
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 dpToPx(cellWidthDp),
                 dpToPx(cellHeightDp)
         );
-        params.setMargins(dpToPx(1), 0, 0, 0); // Add left margin for spacing
+        params.setMargins(dpToPx(1), 0, 0, 0);
         cell.setLayoutParams(params);
         cell.setPadding(dpToPx(2), dpToPx(4), dpToPx(2), dpToPx(4));
 
@@ -494,13 +494,16 @@ public class FieldSelectionActivity extends AppCompatActivity {
                 .map(SelectedSlotDTO::getPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // ← Sửa: Tính đúng tổng số giờ (mỗi slot = 0.5 giờ)
+        double totalHours = selectedSlots.size() * 0.5;
+
         Intent intent = new Intent(this, BookingConfirmActivity.class);
         intent.putExtra("selectedSlots", new Gson().toJson(selectedSlots));
         intent.putExtra("facilityId", facilityId);
         intent.putExtra("facilityName", facilityName);
         intent.putExtra("bookingDate", formatDateForApi(selectedDate));
         intent.putExtra("totalAmount", totalAmount.toString());
-        intent.putExtra("totalHours", selectedSlots.size());
+        intent.putExtra("totalHours", totalHours); // ← Sửa: Gửi double thay vì int
 
         startActivity(intent);
     }
@@ -593,14 +596,29 @@ public class FieldSelectionActivity extends AppCompatActivity {
         return sdf.format(date.getTime());
     }
 
-    private String formatTimeLabel(String time24) {
-        // Convert "07:00:00" to "7:00"
+    private String formatTimeLabel(String startTime) {
+        // Convert "07:00:00" to "7:00-7:30" format
         try {
-            String[] parts = time24.split(":");
-            int hour = Integer.parseInt(parts[0]);
-            return hour + ":00";
+            String[] parts = startTime.split(":");
+            int startHour = Integer.parseInt(parts[0]);
+            int startMinute = Integer.parseInt(parts[1]);
+
+            // Calculate end time (add 30 minutes)
+            int endHour = startHour;
+            int endMinute = startMinute + 30;
+
+            if (endMinute >= 60) {
+                endHour++;
+                endMinute -= 60;
+            }
+
+            // Format as "7:00-7:30"
+            String start = startHour + ":" + String.format("%02d", startMinute);
+            String end = endHour + ":" + String.format("%02d", endMinute);
+
+            return start + "-" + end;
         } catch (Exception e) {
-            return time24;
+            return startTime;
         }
     }
 
@@ -639,5 +657,20 @@ public class FieldSelectionActivity extends AppCompatActivity {
     private void hideEmptyState() {
         layoutEmptyState.setVisibility(View.GONE);
         layoutCalendarGrid.setVisibility(View.VISIBLE);
+    }
+
+    private int getHeaderTextSize() {
+        // Scale từ 8sp (min) đến 14sp (max)
+        return Math.round(8 + (cellWidthDp - MIN_CELL_WIDTH) * 6f / (MAX_CELL_WIDTH - MIN_CELL_WIDTH));
+    }
+
+    private int getSlotTextSize() {
+        // Scale từ 8sp (min) đến 12sp (max)
+        return Math.round(8 + (cellWidthDp - MIN_CELL_WIDTH) * 4f / (MAX_CELL_WIDTH - MIN_CELL_WIDTH));
+    }
+
+    private int getFieldNameTextSize() {
+        // Scale từ 12sp (min) đến 16sp (max)
+        return Math.round(12 + (cellWidthDp - MIN_CELL_WIDTH) * 4f / (MAX_CELL_WIDTH - MIN_CELL_WIDTH));
     }
 }
