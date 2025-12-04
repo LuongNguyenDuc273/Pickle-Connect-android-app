@@ -67,7 +67,7 @@ public class BookingConfirmActivity extends AppCompatActivity {
     private String bookingDate;
     private List<SelectedSlotDTO> selectedSlots;
     private BigDecimal totalAmount;
-    private int totalHours;
+    private double totalHours;
     
     // Adapter
     private SelectedSlotAdapter slotAdapter;
@@ -98,22 +98,22 @@ public class BookingConfirmActivity extends AppCompatActivity {
      */
     private void getIntentData() {
         Intent intent = getIntent();
-        
+
         facilityId = intent.getLongExtra("facilityId", 0);
         facilityName = intent.getStringExtra("facilityName");
         bookingDate = intent.getStringExtra("bookingDate");
-        
+
         String selectedSlotsJson = intent.getStringExtra("selectedSlots");
         selectedSlots = new Gson().fromJson(
-            selectedSlotsJson, 
-            new TypeToken<List<SelectedSlotDTO>>(){}.getType()
+                selectedSlotsJson,
+                new TypeToken<List<SelectedSlotDTO>>(){}.getType()
         );
-        
+
         String totalAmountStr = intent.getStringExtra("totalAmount");
         totalAmount = new BigDecimal(totalAmountStr);
-        
-        totalHours = intent.getIntExtra("totalHours", 0);
-        
+
+        totalHours = intent.getDoubleExtra("totalHours", 0.0);  // ← SỬA: Đổi từ getIntExtra sang getDoubleExtra
+
         if (facilityId == 0 || selectedSlots == null || selectedSlots.isEmpty()) {
             Toast.makeText(this, "Lỗi: Thiếu thông tin đặt sân", Toast.LENGTH_SHORT).show();
             finish();
@@ -213,24 +213,24 @@ public class BookingConfirmActivity extends AppCompatActivity {
     private void displayBookingInfo() {
         // Facility name
         tvFacilityName.setText(facilityName);
-        
+
         // TODO: Get address from facility details (for now, use placeholder)
         tvAddress.setText("Địa chỉ sẽ được cập nhật");
-        
+
         // Booking date (format from yyyy-MM-dd to dd/MM/yyyy)
         tvBookingDate.setText(formatDateForDisplay(bookingDate));
-        
+
         // Court type
         tvCourtType.setText("Đặt sân");
-        
-        // Total hours
-        String hoursText = totalHours + "h";
+
+        // Total hours - SỬA: Hiển thị đúng định dạng
+        String hoursText = String.format(Locale.US, "%.1f giờ", totalHours);  // ← Hiển thị: "1.5 giờ"
         tvTotalHours.setText(hoursText);
         tvPaymentTotalHours.setText(hoursText);
-        
+
         // Total amount
         tvTotalAmount.setText(formatCurrency(totalAmount));
-        
+
         // Set terms text with clickable link
         String termsText = "Tôi xác nhận đồng ý với các điều khoản và chính sách về đặt và hủy sân trên Pickle Connect";
         cbAgreeTerms.setText(termsText);
@@ -334,12 +334,15 @@ public class BookingConfirmActivity extends AppCompatActivity {
      */
     private CreateBookingCourtRequest buildBookingRequest() {
         SharedPrefManager prefManager = SharedPrefManager.getInstance(this);
-        
+
         String orderDescription = etNote.getText().toString().trim();
         if (orderDescription.isEmpty()) {
             orderDescription = "Đặt sân ngày " + formatDateForDisplay(bookingDate);
         }
-        
+
+        // SỬA: Làm tròn lên để tính giờ chơi (VD: 1.5 giờ = 2 giờ cho hệ thống)
+        int hours = (int) Math.ceil(totalHours);  //
+
         return CreateBookingCourtRequest.builder()
                 .facilityId(facilityId)
                 .userId(Long.parseLong(prefManager.getUserId()))
@@ -349,7 +352,7 @@ public class BookingConfirmActivity extends AppCompatActivity {
                 .bookingDate(bookingDate)
                 .selectedSlots(selectedSlots)
                 .totalAmount(totalAmount)
-                .totalHours(totalHours)
+                .totalHours(hours)
                 .paymentMethodCode("VNPPGW")
                 .orderDescription(orderDescription)
                 .build();

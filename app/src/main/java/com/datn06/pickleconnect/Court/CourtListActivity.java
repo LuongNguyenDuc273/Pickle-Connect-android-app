@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.API.CourtApiService;
 import com.datn06.pickleconnect.API.ServiceHost;
+import com.datn06.pickleconnect.Booking.FieldSelectionActivity;
 import com.datn06.pickleconnect.Model.FacilityDTO;
 import com.datn06.pickleconnect.Model.FacilitySearchResponse;
 import com.datn06.pickleconnect.Model.SearchCourtRequest;
@@ -100,16 +101,18 @@ public class CourtListActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView() {
+        // ✅ UPDATED: Tách biệt 2 loại click giống HomeActivity
         courtAdapter = new CourtAdapter(courtList, new CourtAdapter.OnCourtClickListener() {
             @Override
             public void onCourtClick(FacilityDTO facility) {
-                // Navigate to court detail
-                Toast.makeText(CourtListActivity.this, "Xem chi tiết: " + facility.getFacilityName(), Toast.LENGTH_SHORT).show();
+                // ✅ Click vào card (không phải nút) -> mở CourtDetailActivity
+                openCourtDetail(facility);
             }
 
             @Override
             public void onBookNowClick(FacilityDTO facility) {
-                // This callback is no longer used - CourtAdapter handles it directly
+                // ✅ Click vào nút "ĐẶT SÂN" -> mở FieldSelectionActivity
+                openFieldSelection(facility);
             }
         }, this);
 
@@ -296,6 +299,29 @@ public class CourtListActivity extends AppCompatActivity {
             performSearch(request);
         });
         filterBottomSheet.show(getSupportFragmentManager(), "FilterBottomSheet");
+    }
+
+    // ✅ NEW: Open CourtDetailActivity (click vào card)
+    private void openCourtDetail(FacilityDTO facility) {
+        Intent intent = new Intent(CourtListActivity.this, CourtDetailActivity.class);
+        intent.putExtra("facilityId", facility.getFacilityId());
+
+        Log.d(TAG, "Opening CourtDetailActivity for facility: " + facility.getFacilityName());
+
+        startActivity(intent);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+    }
+
+    // ✅ NEW: Open FieldSelectionActivity (click nút "ĐẶT SÂN")
+    private void openFieldSelection(FacilityDTO facility) {
+        Intent intent = new Intent(CourtListActivity.this, FieldSelectionActivity.class);
+        intent.putExtra("facilityId", facility.getFacilityId());
+        intent.putExtra("facilityName", facility.getFacilityName());
+
+        Log.d(TAG, "Opening FieldSelectionActivity for facility: " + facility.getFacilityName());
+
+        startActivity(intent);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private void showLoading(boolean show) {

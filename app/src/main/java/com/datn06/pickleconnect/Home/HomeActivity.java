@@ -1,6 +1,5 @@
 package com.datn06.pickleconnect.Home;
 
-import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
@@ -11,7 +10,6 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -25,12 +23,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
 import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.API.ApiService;
+import com.datn06.pickleconnect.API.AppConfig;
+import com.datn06.pickleconnect.API.MemberApiService;
 import com.datn06.pickleconnect.API.ServiceHost;
 import com.datn06.pickleconnect.Booking.FieldSelectionActivity;
+import com.datn06.pickleconnect.Common.BaseResponse;
 import com.datn06.pickleconnect.Court.CourtDetailActivity;
-import com.datn06.pickleconnect.Event.EventsActivity;
+import com.datn06.pickleconnect.Models.MemberInfoRequest;
+import com.datn06.pickleconnect.Models.MemberInfoResponse;
+import com.datn06.pickleconnect.Profile.ProfileActivity;
 import com.datn06.pickleconnect.R;
 import com.datn06.pickleconnect.Adapter.BannerAdapter;
 import com.datn06.pickleconnect.Adapter.FacilityAdapter;
@@ -38,12 +43,14 @@ import com.datn06.pickleconnect.Adapter.FacilityGroupAdapter;
 import com.datn06.pickleconnect.Model.FacilityDTO;
 import com.datn06.pickleconnect.Home.HomeResponse;
 import com.datn06.pickleconnect.Utils.LoadingDialog;
+import com.datn06.pickleconnect.Utils.TokenManager;
 import com.datn06.pickleconnect.Menu.MenuNavigation;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import de.hdodenhof.circleimageview.CircleImageView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,17 +77,20 @@ public class HomeActivity extends AppCompatActivity {
     private BottomNavigationView bottomNavigation;
     private LinearLayout dotsContainer;
     private LinearLayout rvFacilitiesDotsContainer;
+    private CircleImageView ivProfile;  // ✅ Profile avatar
     private int currentFacilityGroupPosition = 0;
 
     private BannerAdapter bannerAdapter;
     private FacilityGroupAdapter facilityGroupAdapter;
     private ApiService apiService;
+    private MemberApiService memberApiService;  // ✅ For loading profile data
 
     private FusedLocationProviderClient fusedLocationClient;
     private CancellationTokenSource cancellationTokenSource;
 
     private LoadingDialog loadingDialog;
     private MenuNavigation menuNavigation;
+    private TokenManager tokenManager;  // ✅ Token manager
     private int currentBannerPosition = 0;
 
     private boolean isDataLoaded = false;
@@ -118,6 +128,10 @@ public class HomeActivity extends AppCompatActivity {
             return insets;
         });
 
+        // ✅ Initialize TokenManager and MemberApiService
+        tokenManager = TokenManager.getInstance(this);
+        memberApiService = ApiClient.createService(ServiceHost.MEMBER_SERVICE, MemberApiService.class);
+
         initViews();
         setupSearchListeners();
         setupRecyclerViews();
@@ -134,6 +148,9 @@ public class HomeActivity extends AppCompatActivity {
         } else {
             isDataLoaded = true;
         }
+
+        // ✅ Load user avatar
+        loadUserAvatar();
     }
 
     private void initViews() {
@@ -146,6 +163,7 @@ public class HomeActivity extends AppCompatActivity {
         rvFacilitiesDotsContainer = findViewById(R.id.rvFacilitiesDotsContainer);
         etSearch = findViewById(R.id.etSearch);
         searchCard = findViewById(R.id.searchCard);
+        ivProfile = findViewById(R.id.ivProfile);  // ✅ Profile avatar
 
         if (btnFindNearby != null) {
             btnFindNearby.setOnClickListener(v -> openMapActivity());
@@ -156,6 +174,11 @@ public class HomeActivity extends AppCompatActivity {
         }
 
         findViewById(R.id.ivSeeMore).setOnClickListener(v -> openCourtList());
+
+        // ✅ Profile avatar click -> Open ProfileActivity
+        if (ivProfile != null) {
+            ivProfile.setOnClickListener(v -> openProfileActivity());
+        }
     }
 
     private void setupSearchListeners() {
@@ -205,6 +228,9 @@ public class HomeActivity extends AppCompatActivity {
         if (bottomNavigation != null) {
             bottomNavigation.setSelectedItemId(R.id.nav_home);
         }
+
+        // ✅ Reload avatar when returning to HomeActivity
+        loadUserAvatar();
     }
 
     @Override
@@ -218,7 +244,76 @@ public class HomeActivity extends AppCompatActivity {
         if (forceRefresh) {
             Log.d(TAG, "Force refresh requested");
             loadHomeData();
+            loadUserAvatar();  // ✅ Reload avatar
         }
+    }
+
+    // ✅ NEW: Load user avatar from database
+    private void loadUserAvatar() {
+        if (!tokenManager.isLoggedIn()) {
+            Log.w(TAG, "User not logged in, using default avatar");
+            return;
+        }
+
+        String currentUserId = tokenManager.getUserId();
+        String currentEmail = tokenManager.getEmail();
+        String currentPhone = tokenManager.getPhoneNumber();
+
+        Log.d(TAG, "Loading avatar for userId: " + currentUserId);
+
+        MemberInfoRequest request = new MemberInfoRequest(
+                currentUserId,
+                currentEmail,
+                currentPhone
+        );
+
+        memberApiService.getMemberInfo(request).enqueue(new Callback<BaseResponse<MemberInfoResponse>>() {
+            @Override
+            public void onResponse(Call<BaseResponse<MemberInfoResponse>> call,
+                                   Response<BaseResponse<MemberInfoResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    BaseResponse<MemberInfoResponse> baseResponse = response.body();
+
+                    if ("00".equals(baseResponse.getCode())) {
+                        MemberInfoResponse data = baseResponse.getData();
+                        updateProfileAvatar(data.getAvatarUrl());
+                    } else {
+                        Log.w(TAG, "Failed to load avatar: " + baseResponse.getMessage());
+                    }
+                } else {
+                    Log.e(TAG, "Avatar API response failed: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<BaseResponse<MemberInfoResponse>> call, Throwable t) {
+                Log.e(TAG, "Avatar API call failed: " + t.getMessage(), t);
+            }
+        });
+    }
+
+    // ✅ NEW: Update profile avatar using Glide
+    private void updateProfileAvatar(String avatarUrl) {
+        if (ivProfile != null && avatarUrl != null && !avatarUrl.isEmpty()) {
+            // Convert localhost MinIO URL to public ngrok URL
+            String imageUrl = AppConfig.fixImageUrl(avatarUrl);
+            Log.d(TAG, "Loading avatar from: " + imageUrl);
+
+            Glide.with(this)
+                    .load(imageUrl)
+                    .placeholder(R.drawable.avartar_placeholder)
+                    .error(R.drawable.avartar_placeholder)
+                    .into(ivProfile);
+        } else {
+            Log.w(TAG, "Avatar URL is null or empty");
+        }
+    }
+
+    // ✅ NEW: Open ProfileActivity when clicking avatar
+    private void openProfileActivity() {
+        Intent intent = new Intent(HomeActivity.this, ProfileActivity.class);
+        startActivity(intent);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private void setupRecyclerViews() {
@@ -255,17 +350,14 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
-        // ✅ UPDATED: Tách biệt 2 loại click
         facilityGroupAdapter = new FacilityGroupAdapter(this, new FacilityAdapter.OnFacilityClickListener() {
             @Override
             public void onFacilityClick(FacilityDTO facility) {
-                // ✅ Click vào card (không phải nút) -> mở CourtDetailActivity
                 openCourtDetail(facility);
             }
 
             @Override
             public void onBookClick(FacilityDTO facility) {
-                // ✅ Click vào nút "ĐẶT SÂN" -> mở FieldSelectionActivity
                 openFieldSelection(facility);
             }
         });
@@ -574,7 +666,6 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    // ✅ NEW: Open CourtDetailActivity (click vào card)
     private void openCourtDetail(FacilityDTO facility) {
         Intent intent = new Intent(HomeActivity.this, CourtDetailActivity.class);
         intent.putExtra("facilityId", facility.getFacilityId());
@@ -585,7 +676,6 @@ public class HomeActivity extends AppCompatActivity {
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
-    // ✅ UPDATED: Open FieldSelectionActivity (click nút "ĐẶT SÂN")
     private void openFieldSelection(FacilityDTO facility) {
         Intent intent = new Intent(HomeActivity.this, FieldSelectionActivity.class);
         intent.putExtra("facilityId", facility.getFacilityId());

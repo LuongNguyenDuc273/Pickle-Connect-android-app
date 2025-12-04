@@ -119,13 +119,14 @@
                                 android:textStyle="bold"
                                 android:textColor="@android:color/black" />
 
-                            <androidx.recyclerview.widget.RecyclerView
-                                android:id="@+id/rvSelectedSlots"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:nestedScrollingEnabled="false"
-                                tools:listitem="@layout/item_selected_slot_group" />
                         </LinearLayout>
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvSelectedSlots"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false"
+                            tools:listitem="@layout/item_selected_slot_group" />
 
                         <!-- Address -->
                         <LinearLayout
