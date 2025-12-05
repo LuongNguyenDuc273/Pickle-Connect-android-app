@@ -21,7 +21,7 @@ public interface BookingApiService {
      * @param request Request containing userId, status, fromDate, toDate
      * @return List of booking history
      */
-    @POST("transaction/history")
+    @POST("api-andr/history")
     Call<List<BookingHistoryDTO>> getBookingHistory(
         @Body BookingHistoryRequest request
     );
@@ -32,7 +32,7 @@ public interface BookingApiService {
      * @param bookingId Booking ID
      * @return Detailed booking information
      */
-    @GET("transaction/detail/{bookingId}")
+    @GET("api-andr/detail/{bookingId}")
     Call<BookingHistoryDTO> getBookingDetail(
         @Path("bookingId") Long bookingId
     );
