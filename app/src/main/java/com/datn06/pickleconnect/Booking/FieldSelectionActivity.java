@@ -45,6 +45,7 @@ import retrofit2.Response;
 
 /**
  * Activity for selecting fields and time slots for booking - Grid Layout Version
+ * Updated: Merged event slots + click to navigate to event booking
  */
 public class FieldSelectionActivity extends AppCompatActivity {
 
@@ -278,14 +279,14 @@ public class FieldSelectionActivity extends AppCompatActivity {
                     dpToPx(cellWidthDp),
                     dpToPx(cellHeightDp)
             );
-            params.setMargins(dpToPx(1), 0, 0, 0); // Add left margin for spacing
+            params.setMargins(dpToPx(1), 0, 0, 0);
             timeCell.setLayoutParams(params);
             layoutTimeHeader.addView(timeCell);
         }
     }
 
     /**
-     * Build field rows
+     * Build field rows with merged event slots
      */
     private void buildFieldRows() {
         for (FieldAvailabilityDTO field : fieldBookingData.getFields()) {
@@ -295,22 +296,92 @@ public class FieldSelectionActivity extends AppCompatActivity {
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
             );
-            rowParams.setMargins(0, dpToPx(1), 0, 0); // Add top margin for spacing
+            rowParams.setMargins(0, dpToPx(1), 0, 0);
             fieldRow.setLayoutParams(rowParams);
 
             // Add field name cell
             TextView fieldNameCell = createFieldNameCell(field.getFieldName());
             fieldRow.addView(fieldNameCell);
 
-            // Add time slot cells
-            for (String timeSlot : uniqueTimeSlots) {
+            // Track event slots to merge
+            int i = 0;
+            while (i < uniqueTimeSlots.size()) {
+                String timeSlot = uniqueTimeSlots.get(i);
                 TimeSlotDTO slot = findSlotByTime(field, timeSlot);
-                TextView slotCell = createSlotCell(slot, field);
-                fieldRow.addView(slotCell);
+
+                // Check if this is an event slot
+                if (slot != null && slot.getEventId() != null && !slot.getEventId().equals("null")) {
+                    // Find consecutive event slots with same eventId
+                    int spanCount = 1;
+                    String eventId = slot.getEventId();
+
+                    for (int j = i + 1; j < uniqueTimeSlots.size(); j++) {
+                        TimeSlotDTO nextSlot = findSlotByTime(field, uniqueTimeSlots.get(j));
+                        if (nextSlot != null && eventId.equals(nextSlot.getEventId())) {
+                            spanCount++;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    // Create merged event cell
+                    TextView eventCell = createMergedEventCell(slot, field, spanCount);
+                    fieldRow.addView(eventCell);
+
+                    // Skip the merged slots
+                    i += spanCount;
+                } else {
+                    // Regular slot (available, booked, or empty)
+                    TextView slotCell = createSlotCell(slot, field);
+                    fieldRow.addView(slotCell);
+                    i++;
+                }
             }
 
             layoutFieldRows.addView(fieldRow);
         }
+    }
+
+    /**
+     * Create merged event cell (spans multiple time slots)
+     */
+    private TextView createMergedEventCell(TimeSlotDTO slot, FieldAvailabilityDTO field, int spanCount) {
+        TextView cell = new TextView(this);
+        cell.setGravity(Gravity.CENTER);
+        cell.setTextSize(getSlotTextSize());
+
+        // Calculate width for merged cell
+        int totalWidth = dpToPx(cellWidthDp * spanCount + (spanCount - 1)); // Include margins
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                totalWidth,
+                dpToPx(cellHeightDp)
+        );
+        params.setMargins(dpToPx(1), 0, 0, 0);
+        cell.setLayoutParams(params);
+        cell.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
+
+        // Event style - Pink background
+        cell.setBackgroundColor(Color.parseColor("#FF4081"));
+        cell.setTextColor(Color.WHITE);
+        cell.setText("Sự kiện\n" + formatCurrency(slot.getTicketPrice()));
+        cell.setMaxLines(2);
+
+        // Click to navigate to event booking
+        cell.setOnClickListener(v -> navigateToEventBooking(slot.getEventId()));
+
+        return cell;
+    }
+
+    /**
+     * Navigate to event booking screen
+     */
+    private void navigateToEventBooking(String eventId) {
+        Intent intent = new Intent(this, EventsActivity.class);
+        intent.putExtra("facilityId", facilityId);
+        intent.putExtra("facilityName", facilityName);
+        intent.putExtra("eventId", eventId); // Pass eventId to auto-select
+        intent.putExtra("bookingDate", formatDateForApi(selectedDate));
+        startActivity(intent);
     }
 
     /**
@@ -334,14 +405,11 @@ public class FieldSelectionActivity extends AppCompatActivity {
         TextView cell = new TextView(this);
         cell.setText(text);
         cell.setGravity(Gravity.CENTER);
-        cell.setTextSize(getHeaderTextSize()); // ← Sửa: Text size tự động
+        cell.setTextSize(getHeaderTextSize());
         cell.setTextColor(Color.BLACK);
         cell.setBackgroundColor(Color.parseColor("#F5F5F5"));
         cell.setPadding(dpToPx(2), dpToPx(8), dpToPx(2), dpToPx(8));
-
-        // Add border
         cell.setBackground(ContextCompat.getDrawable(this, R.drawable.cell_border));
-
         return cell;
     }
 
@@ -352,7 +420,7 @@ public class FieldSelectionActivity extends AppCompatActivity {
         TextView cell = new TextView(this);
         cell.setText(fieldName);
         cell.setGravity(Gravity.CENTER);
-        cell.setTextSize(getFieldNameTextSize()); // ← Sửa: Text size tự động
+        cell.setTextSize(getFieldNameTextSize());
         cell.setTextColor(Color.BLACK);
         cell.setTypeface(null, android.graphics.Typeface.BOLD);
         cell.setLayoutParams(new LinearLayout.LayoutParams(
@@ -361,21 +429,18 @@ public class FieldSelectionActivity extends AppCompatActivity {
         ));
         cell.setBackgroundColor(Color.parseColor("#E8F5E9"));
         cell.setPadding(dpToPx(4), dpToPx(8), dpToPx(4), dpToPx(8));
-
-        // Add border
         cell.setBackground(ContextCompat.getDrawable(this, R.drawable.cell_border));
         cell.setBackgroundColor(Color.parseColor("#E8F5E9"));
-
         return cell;
     }
 
     /**
-     * Create time slot cell
+     * Create time slot cell (for regular slots, not events)
      */
     private TextView createSlotCell(TimeSlotDTO slot, FieldAvailabilityDTO field) {
         TextView cell = new TextView(this);
         cell.setGravity(Gravity.CENTER);
-        cell.setTextSize(getSlotTextSize()); // ← Sửa: Text size tự động
+        cell.setTextSize(getSlotTextSize());
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 dpToPx(cellWidthDp),
                 dpToPx(cellHeightDp)
@@ -394,8 +459,10 @@ public class FieldSelectionActivity extends AppCompatActivity {
         // Set initial appearance based on status
         updateSlotCellAppearance(cell, slot, field);
 
-        // Set click listener
-        cell.setOnClickListener(v -> onSlotCellClicked(cell, slot, field));
+        // Set click listener (only for available slots)
+        if (slot.getIsAvailable() && (slot.getEventId() == null || slot.getEventId().equals("null"))) {
+            cell.setOnClickListener(v -> onSlotCellClicked(cell, slot, field));
+        }
 
         return cell;
     }
@@ -417,11 +484,6 @@ public class FieldSelectionActivity extends AppCompatActivity {
             cell.setTextColor(Color.WHITE);
             cell.setText("Đã đặt");
             cell.setEnabled(false);
-        } else if (slot.getEventId() != null && !slot.getEventId().equals("null")) {
-            // Event - Pink
-            cell.setBackgroundColor(Color.parseColor("#FF4081"));
-            cell.setTextColor(Color.WHITE);
-            cell.setText(formatCurrency(slot.getTicketPrice()));
         } else {
             // Available - Cyan
             cell.setBackgroundColor(Color.parseColor("#00BCD4"));
@@ -494,7 +556,6 @@ public class FieldSelectionActivity extends AppCompatActivity {
                 .map(SelectedSlotDTO::getPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // ← Sửa: Tính đúng tổng số giờ (mỗi slot = 0.5 giờ)
         double totalHours = selectedSlots.size() * 0.5;
 
         Intent intent = new Intent(this, BookingConfirmActivity.class);
@@ -503,31 +564,27 @@ public class FieldSelectionActivity extends AppCompatActivity {
         intent.putExtra("facilityName", facilityName);
         intent.putExtra("bookingDate", formatDateForApi(selectedDate));
         intent.putExtra("totalAmount", totalAmount.toString());
-        intent.putExtra("totalHours", totalHours); // ← Sửa: Gửi double thay vì int
+        intent.putExtra("totalHours", totalHours);
 
         startActivity(intent);
     }
-
-    // ========== Date Navigation ==========
 
     /**
      * Zoom grid in/out
      */
     private void zoomGrid(boolean zoomIn) {
         if (zoomIn) {
-            // Zoom in - increase cell size
             if (cellWidthDp < MAX_CELL_WIDTH) {
                 cellWidthDp += ZOOM_STEP;
-                cellHeightDp = (int) (cellWidthDp * 0.625); // Maintain aspect ratio
+                cellHeightDp = (int) (cellWidthDp * 0.625);
                 rebuildGrid();
             } else {
                 Toast.makeText(this, "Đã phóng to tối đa", Toast.LENGTH_SHORT).show();
             }
         } else {
-            // Zoom out - decrease cell size
             if (cellWidthDp > MIN_CELL_WIDTH) {
                 cellWidthDp -= ZOOM_STEP;
-                cellHeightDp = (int) (cellWidthDp * 0.625); // Maintain aspect ratio
+                cellHeightDp = (int) (cellWidthDp * 0.625);
                 rebuildGrid();
             } else {
                 Toast.makeText(this, "Đã thu nhỏ tối đa", Toast.LENGTH_SHORT).show();
@@ -597,13 +654,11 @@ public class FieldSelectionActivity extends AppCompatActivity {
     }
 
     private String formatTimeLabel(String startTime) {
-        // Convert "07:00:00" to "7:00-7:30" format
         try {
             String[] parts = startTime.split(":");
             int startHour = Integer.parseInt(parts[0]);
             int startMinute = Integer.parseInt(parts[1]);
 
-            // Calculate end time (add 30 minutes)
             int endHour = startHour;
             int endMinute = startMinute + 30;
 
@@ -612,7 +667,6 @@ public class FieldSelectionActivity extends AppCompatActivity {
                 endMinute -= 60;
             }
 
-            // Format as "7:00-7:30"
             String start = startHour + ":" + String.format("%02d", startMinute);
             String end = endHour + ":" + String.format("%02d", endMinute);
 
@@ -627,7 +681,6 @@ public class FieldSelectionActivity extends AppCompatActivity {
             return "0";
         }
 
-        // Format as "100k" instead of full number
         long value = amount.longValue();
         if (value >= 1000) {
             return (value / 1000) + "k";
@@ -660,17 +713,14 @@ public class FieldSelectionActivity extends AppCompatActivity {
     }
 
     private int getHeaderTextSize() {
-        // Scale từ 8sp (min) đến 14sp (max)
         return Math.round(8 + (cellWidthDp - MIN_CELL_WIDTH) * 6f / (MAX_CELL_WIDTH - MIN_CELL_WIDTH));
     }
 
     private int getSlotTextSize() {
-        // Scale từ 8sp (min) đến 12sp (max)
         return Math.round(8 + (cellWidthDp - MIN_CELL_WIDTH) * 4f / (MAX_CELL_WIDTH - MIN_CELL_WIDTH));
     }
 
     private int getFieldNameTextSize() {
-        // Scale từ 12sp (min) đến 16sp (max)
         return Math.round(12 + (cellWidthDp - MIN_CELL_WIDTH) * 4f / (MAX_CELL_WIDTH - MIN_CELL_WIDTH));
     }
 }
