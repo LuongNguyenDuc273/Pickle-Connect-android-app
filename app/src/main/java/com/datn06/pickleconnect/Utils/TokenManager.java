@@ -19,6 +19,7 @@ public class TokenManager {
     private static final String KEY_FULL_NAME = "full_name";
     private static final String KEY_EMAIL = "email";
     private static final String KEY_PHONE_NUMBER = "phone_number";
+    private static final String KEY_USER_ID_ALIAS = "user_id_alias"; // ✅ User alias like "10000J"
 
     // Private constructor
     private TokenManager(Context context) {
@@ -59,13 +60,14 @@ public class TokenManager {
     /**
      * Save user information after login
      */
-    public void saveUserInfo(String userId, String username, String fullName, String email, String phoneNumber) { // ✅ THÊM phoneNumber
+    public void saveUserInfo(String userId, String username, String fullName, String email, String phoneNumber, String userIdAlias) { // ✅ THÊM userIdAlias
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(KEY_USER_ID, userId);
         editor.putString(KEY_USERNAME, username);
         editor.putString(KEY_FULL_NAME, fullName);
         editor.putString(KEY_EMAIL, email);
-        editor.putString(KEY_PHONE_NUMBER, phoneNumber); // ✅ LƯU phoneNumber
+        editor.putString(KEY_PHONE_NUMBER, phoneNumber);
+        editor.putString(KEY_USER_ID_ALIAS, userIdAlias); // ✅ LƯU userIdAlias
         editor.apply();
     }
 
@@ -73,7 +75,7 @@ public class TokenManager {
      * Save all login data at once
      */
     public void saveLoginData(String token, String refreshToken, String userId,
-                              String username, String fullName, String email, String phoneNumber) { // ✅ THÊM phoneNumber
+                              String username, String fullName, String email, String phoneNumber, String userIdAlias) { // ✅ THÊM userIdAlias
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(KEY_JWT_TOKEN, token);
         editor.putString(KEY_REFRESH_TOKEN, refreshToken);
@@ -81,7 +83,8 @@ public class TokenManager {
         editor.putString(KEY_USERNAME, username);
         editor.putString(KEY_FULL_NAME, fullName);
         editor.putString(KEY_EMAIL, email);
-        editor.putString(KEY_PHONE_NUMBER, phoneNumber); // ✅ LƯU phoneNumber
+        editor.putString(KEY_PHONE_NUMBER, phoneNumber);
+        editor.putString(KEY_USER_ID_ALIAS, userIdAlias); // ✅ LƯU userIdAlias
         editor.apply();
     }
 
@@ -142,8 +145,15 @@ public class TokenManager {
     /**
      * Get phone number
      */
-    public String getPhoneNumber() { // ✅ THÊM MỚI
+    public String getPhoneNumber() {
         return sharedPreferences.getString(KEY_PHONE_NUMBER, null);
+    }
+
+    /**
+     * Get user ID alias (e.g., "10000J")
+     */
+    public String getUserIdAlias() { // ✅ THÊM MỚI
+        return sharedPreferences.getString(KEY_USER_ID_ALIAS, null);
     }
 
     // =========================================================================

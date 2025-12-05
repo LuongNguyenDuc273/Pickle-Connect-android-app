@@ -60,18 +60,24 @@ public interface TournamentApiService {
     /**
      * Register for tournament
      * Endpoint: POST /tourney-reg
+     *
+     * @param request Request containing userId, tournamentId, tournamentDetailId, matchType, tourneyRegUsers
+     * @return Registration response with orderId for payment initialization
      */
-//    @POST("api-andr/tourney-reg")
-//    Call<BaseResponse<TourneyRegResponse>> registerTourney(
-//            @Body TourneyRegRequest request
-//    );
+    @POST("api-andr/tourney-reg")
+    Call<BaseResponse<TourneyRegResponse>> registerTournament(
+            @Body TourneyRegRequest request
+    );
 
     /**
      * Initialize tournament registration payment
      * Endpoint: POST /tourney-reg-init
+     *
+     * @param request Request containing userId, orderId, totalAmount, paymentMethod
+     * @return Payment URL for VNPay gateway
      */
-//    @POST("api-andr/tourney-reg-init")
-//    Call<BaseResponse<PaymentUrlResponse>> initTourneyPayment(
-//            @Body TourneyRegInitRequest request
-//    );
+    @POST("api-andr/tourney-reg-init")
+    Call<BaseResponse<PaymentUrlResponse>> initTournamentPayment(
+            @Body TourneyRegInitRequest request
+    );
 }

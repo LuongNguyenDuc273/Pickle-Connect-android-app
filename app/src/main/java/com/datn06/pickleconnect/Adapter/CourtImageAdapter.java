@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.datn06.pickleconnect.API.AppConfig;
 import com.datn06.pickleconnect.R;
 
 import java.util.List;
@@ -59,9 +60,12 @@ public class CourtImageAdapter extends RecyclerView.Adapter<CourtImageAdapter.Im
                 // Load placeholder image
                 imageView.setImageResource(R.drawable.banner_placeholder);
             } else {
+                // ✅ Fix localhost URLs for emulator
+                String fixedUrl = AppConfig.fixImageUrl(imageUrl);
+                
                 // Load image from URL using Glide
                 Glide.with(itemView.getContext())
-                        .load(imageUrl)
+                        .load(fixedUrl)
                         .placeholder(R.drawable.banner_placeholder)
                         .error(R.drawable.banner_placeholder)
                         .diskCacheStrategy(DiskCacheStrategy.ALL)

@@ -1,23 +1,42 @@
 package com.datn06.pickleconnect.tournament;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.datn06.pickleconnect.API.ApiClient;
+import com.datn06.pickleconnect.API.ServiceHost;
+import com.datn06.pickleconnect.API.TournamentApiService;
+import com.datn06.pickleconnect.Common.BaseResponse;
+import com.datn06.pickleconnect.Model.PaymentUrlResponse;
+import com.datn06.pickleconnect.Models.Tournament.*;
+import com.datn06.pickleconnect.PaymentResultActivity;
 import com.datn06.pickleconnect.R;
+import com.datn06.pickleconnect.Utils.SharedPrefManager;
+import com.datn06.pickleconnect.Utils.TokenManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class TournamentConfirmationActivity extends AppCompatActivity {
 
@@ -38,16 +57,26 @@ public class TournamentConfirmationActivity extends AppCompatActivity {
     private TextView tvTotalAmount;
     private Button btnConfirm;
     private ImageView btnBack;
+    private ProgressBar progressBar;
+
+    // API
+    private TournamentApiService tournamentApiService;
+    private TokenManager tokenManager;
+    private SharedPrefManager sharedPrefManager;
 
     // Data
     private String tournamentId;
+    private String tournamentDetailId;
     private String matchTypeId;
+    private String matchTypeName;
     private String playerName;
     private String playerPhone;
     private String playerEmail;
     private String playerGender;
+    private String playerDateOfBirth;
     private String dynamicFormDataJson;
     private double registrationFee;
+    private String orderId; // ✅ From tourney-reg API
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +88,7 @@ public class TournamentConfirmationActivity extends AppCompatActivity {
         Log.d(TAG, "╚════════════════════════════════════════════════════════════╝");
 
         initViews();
+        initApi();
         loadDataFromIntent();
         displayData();
         setupListeners();
@@ -82,8 +112,23 @@ public class TournamentConfirmationActivity extends AppCompatActivity {
         tvTotalAmount = findViewById(R.id.tvTotalAmount);
         btnConfirm = findViewById(R.id.btnConfirm);
         btnBack = findViewById(R.id.btnBack);
+        progressBar = findViewById(R.id.progressBar);
 
         Log.d(TAG, "  ✓ Views initialized");
+    }
+
+    private void initApi() {
+        Log.d(TAG, "▶ initApi()");
+
+        tokenManager = TokenManager.getInstance(this);
+        sharedPrefManager = SharedPrefManager.getInstance(this);
+
+        tournamentApiService = ApiClient.createService(
+                ServiceHost.TOURNAMENT_SERVICE,
+                TournamentApiService.class
+        );
+
+        Log.d(TAG, "  ✓ API initialized");
     }
 
     private void loadDataFromIntent() {
@@ -91,13 +136,14 @@ public class TournamentConfirmationActivity extends AppCompatActivity {
 
         // Tournament Info
         tournamentId = getIntent().getStringExtra("tournamentId");
+        tournamentDetailId = getIntent().getStringExtra("tournamentDetailId");
         String tournamentName = getIntent().getStringExtra("tournamentName");
         String tournamentDate = getIntent().getStringExtra("tournamentDate");
         String tournamentLocation = getIntent().getStringExtra("tournamentLocation");
 
         // Match Type Info
         matchTypeId = getIntent().getStringExtra("matchTypeId");
-        String matchTypeName = getIntent().getStringExtra("matchTypeName");
+        matchTypeName = getIntent().getStringExtra("matchTypeName");
 
         // Registration Fee
         String feeString = getIntent().getStringExtra("registrationFee");
@@ -113,14 +159,22 @@ public class TournamentConfirmationActivity extends AppCompatActivity {
         playerPhone = getIntent().getStringExtra("playerPhone");
         playerEmail = getIntent().getStringExtra("playerEmail");
         playerGender = getIntent().getStringExtra("playerGender");
+        playerDateOfBirth = getIntent().getStringExtra("playerDateOfBirth");
 
         // Dynamic Form Data
         dynamicFormDataJson = getIntent().getStringExtra("dynamicFormData");
 
+        // Registration data from API
+        orderId = getIntent().getStringExtra("orderId"); // ✅ IMPORTANT
+
         Log.d(TAG, "  Tournament ID: " + tournamentId);
+        Log.d(TAG, "  Order ID: " + orderId);
+        Log.d(TAG, "  Tournament Detail ID: " + tournamentDetailId);
         Log.d(TAG, "  Tournament Name: " + tournamentName);
         Log.d(TAG, "  Match Type: " + matchTypeName);
+        Log.d(TAG, "  Match Type ID: " + matchTypeId);
         Log.d(TAG, "  Player Name: " + playerName);
+        Log.d(TAG, "  Player DOB: " + playerDateOfBirth);
         Log.d(TAG, "  Registration Fee: " + registrationFee);
         Log.d(TAG, "  Dynamic Form Data: " + (dynamicFormDataJson != null ? "Present" : "Null"));
     }
@@ -194,41 +248,119 @@ public class TournamentConfirmationActivity extends AppCompatActivity {
         Log.d(TAG, "║                 handleConfirm() START                      ║");
         Log.d(TAG, "╚════════════════════════════════════════════════════════════╝");
 
-        // TODO: Implement payment flow
-        // For now, just show success message
-
-        Log.d(TAG, "  Tournament ID: " + tournamentId);
-        Log.d(TAG, "  Match Type ID: " + matchTypeId);
-        Log.d(TAG, "  Player Name: " + playerName);
-        Log.d(TAG, "  Player Phone: " + playerPhone);
-        Log.d(TAG, "  Player Email: " + playerEmail);
-        Log.d(TAG, "  Player Gender: " + playerGender);
-        Log.d(TAG, "  Registration Fee: " + registrationFee);
-
-        // Log dynamic form data for registration API
-        if (dynamicFormDataJson != null) {
-            try {
-                JSONArray jsonArray = new JSONArray(dynamicFormDataJson);
-                Log.d(TAG, "  Dynamic Form Data for API:");
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    JSONObject fieldObj = jsonArray.getJSONObject(i);
-                    String fieldName = fieldObj.optString("fieldName", "");
-                    String value = fieldObj.optString("value", "");
-                    Log.d(TAG, "    " + fieldName + " = " + value);
-                }
-            } catch (JSONException e) {
-                Log.e(TAG, "  ✗ Error parsing dynamic form data", e);
-            }
+        if (orderId == null || orderId.isEmpty()) {
+            showError("Lỗi: Không tìm thấy mã đơn hàng");
+            Log.e(TAG, "  ✗ orderId is null or empty");
+            return;
         }
 
-        // TODO: Call registration API here
-        Toast.makeText(this,
-                "Xác nhận thành công!\nChức năng thanh toán đang được phát triển...",
-                Toast.LENGTH_LONG).show();
+        Log.d(TAG, "  Order ID: " + orderId);
+        Log.d(TAG, "  Registration Fee: " + registrationFee);
 
-        // TODO: Navigate to payment gateway (VNPAY)
-        // For now, just finish
-        // finish();
+        // Call tourney-reg-init API to get payment URL
+        callTourneyRegInitApi();
+    }
+
+    /**
+     * Call tourney-reg-init API
+     * - Get payment URL from VNPay
+     * - Open browser to payment page
+     */
+    private void callTourneyRegInitApi() {
+        Log.d(TAG, "▶ callTourneyRegInitApi()");
+        Log.d(TAG, "  orderId: " + orderId);
+
+        showLoading(true);
+
+        String userId = tokenManager.getUserId();
+        if (userId == null || userId.isEmpty()) {
+            showError("Không tìm thấy thông tin người dùng");
+            showLoading(false);
+            return;
+        }
+
+        TourneyRegInitRequest request = new TourneyRegInitRequest();
+        request.setUserId(userId);
+        request.setOrderId(orderId);
+        request.setTotalAmount(String.valueOf((int) registrationFee));
+        request.setPaymentMethod("VNPGW");
+        request.setOrderDescription("Thanh toán đăng ký giải đấu " + tournamentId);
+
+        Call<BaseResponse<PaymentUrlResponse>> call = tournamentApiService.initTournamentPayment(request);
+
+        call.enqueue(new Callback<BaseResponse<PaymentUrlResponse>>() {
+            @Override
+            public void onResponse(Call<BaseResponse<PaymentUrlResponse>> call,
+                                   Response<BaseResponse<PaymentUrlResponse>> response) {
+                showLoading(false);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    BaseResponse<PaymentUrlResponse> baseResponse = response.body();
+
+                    if ("00".equals(baseResponse.getCode())) {
+                        PaymentUrlResponse data = baseResponse.getData();
+                        String paymentUrl = data.getPaymentUrl();
+
+                        Log.d(TAG, "  ✓ Payment URL received");
+                        Log.d(TAG, "  Payment URL: " + paymentUrl);
+
+                        // Save orderId to SharedPreferences (for PaymentResultActivity)
+                        sharedPrefManager.saveBookingFacilityId(orderId);
+
+                        // Open payment URL in browser
+                        openPaymentUrl(paymentUrl);
+                    } else {
+                        String errorMsg = baseResponse.getMessage();
+                        Log.e(TAG, "  ✗ Get payment URL failed: " + errorMsg);
+                        showError(errorMsg != null ? errorMsg : "Không thể tạo link thanh toán");
+                    }
+                } else {
+                    Log.e(TAG, "  ✗ Response unsuccessful: " + response.code());
+                    showError("Lỗi server: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<BaseResponse<PaymentUrlResponse>> call, Throwable t) {
+                showLoading(false);
+                Log.e(TAG, "  ✗ API call failed", t);
+                showError("Lỗi kết nối: " + t.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Open VNPay payment URL in browser
+     */
+    private void openPaymentUrl(String paymentUrl) {
+        if (paymentUrl == null || paymentUrl.isEmpty()) {
+            Toast.makeText(this, "Lỗi: Không nhận được URL thanh toán", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(paymentUrl));
+            startActivity(browserIntent);
+
+            Toast.makeText(this, "Đang chuyển đến trang thanh toán VNPay...", Toast.LENGTH_LONG).show();
+
+            // Finish activity
+            finish();
+        } catch (Exception e) {
+            Log.e(TAG, "Error opening payment URL", e);
+            Toast.makeText(this, "Lỗi mở trang thanh toán: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showLoading(boolean show) {
+        if (progressBar != null) {
+            progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+        btnConfirm.setEnabled(!show);
+    }
+
+    private void showError(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
     /**

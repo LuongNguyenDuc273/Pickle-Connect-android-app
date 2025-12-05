@@ -149,6 +149,9 @@ public class TourneyDetailResponse {
     }
 
     public static class MatchType {
+        @SerializedName("tournamentDetailId")
+        private String tournamentDetailId; // ID of tournament_details record
+
         @SerializedName("matchTypeCode")
         private String matchTypeCode; // SINGLE_MALE, SINGLE_FEMALE, DOUBLE_MALE, DOUBLE_FEMALE, DOUBLE_MIXED
 
@@ -168,6 +171,14 @@ public class TourneyDetailResponse {
         private String endDate;
 
         // Getters and Setters
+        public String getTournamentDetailId() {
+            return tournamentDetailId;
+        }
+
+        public void setTournamentDetailId(String tournamentDetailId) {
+            this.tournamentDetailId = tournamentDetailId;
+        }
+
         public String getMatchTypeCode() {
             return matchTypeCode;
         }

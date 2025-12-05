@@ -98,7 +98,7 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
     private SimpleDateFormat apiFormatWithDash = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
     private SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
 
-    private List<TourneyDetailResponse.MatchType> matchTypeList = new ArrayList<>();
+    private List<RegType> matchTypeList = new ArrayList<>();
     private List<TourneyRegConfigResponse> formFields = new ArrayList<>();
     private double registrationFee;
 
@@ -311,7 +311,7 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 hideFieldError(tvErrorMatchType);
                 if (position >= 0 && position < matchTypeList.size()) {
-                    TourneyDetailResponse.MatchType selectedType = matchTypeList.get(position);
+                    RegType selectedType = matchTypeList.get(position);
                     loadFormConfig();
                 }
             }
@@ -475,6 +475,19 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
                         Log.d(TAG, "    Email: " + data.getEmail());
                         Log.d(TAG, "    Gender: " + data.getGender());
 
+                        // ✅ LƯU userIdAlias vào TokenManager (CHO ĐĂNG KÝ GIẢI ĐẤU)
+                        if (data.getUserIdAlias() != null && !data.getUserIdAlias().isEmpty()) {
+                            tokenManager.saveUserInfo(
+                                tokenManager.getUserId(),
+                                tokenManager.getUsername(),
+                                tokenManager.getFullName(),
+                                tokenManager.getEmail(),
+                                tokenManager.getPhoneNumber(),
+                                data.getUserIdAlias()  // ✅ LƯU userIdAlias
+                            );
+                            Log.d(TAG, "  ✅ Saved userIdAlias: " + data.getUserIdAlias());
+                        }
+
                         // ✅ Auto-fill fixed fields
                         populateFixedFields(data);
 
@@ -623,19 +636,18 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
 
         showLoading(true);
 
-        TourneyDetailRequest request = new TourneyDetailRequest(
+        TourneyRegTypeRequest request = new TourneyRegTypeRequest(
                 currentUserId,
-                tournamentId,
-                "2"
+                tournamentId
         );
 
-        Call<BaseResponse<TourneyDetailResponse>> call =
-                tournamentApiService.getTourneyDetail(request);
+        Call<BaseResponse<TourneyRegTypeResponse>> call =
+                tournamentApiService.getTourneyRegType(request);
 
-        call.enqueue(new Callback<BaseResponse<TourneyDetailResponse>>() {
+        call.enqueue(new Callback<BaseResponse<TourneyRegTypeResponse>>() {
             @Override
-            public void onResponse(Call<BaseResponse<TourneyDetailResponse>> call,
-                                   Response<BaseResponse<TourneyDetailResponse>> response) {
+            public void onResponse(Call<BaseResponse<TourneyRegTypeResponse>> call,
+                                   Response<BaseResponse<TourneyRegTypeResponse>> response) {
                 showLoading(false);
 
                 Log.d(TAG, "╔════════════════════════════════════════════════════════════╗");
@@ -643,20 +655,21 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
                 Log.d(TAG, "╚════════════════════════════════════════════════════════════╝");
 
                 if (response.isSuccessful() && response.body() != null) {
-                    BaseResponse<TourneyDetailResponse> baseResponse = response.body();
+                    BaseResponse<TourneyRegTypeResponse> baseResponse = response.body();
 
                     if ("00".equals(baseResponse.getCode())) {
-                        TourneyDetailResponse data = baseResponse.getData();
+                        TourneyRegTypeResponse data = baseResponse.getData();
 
-                        if (data != null && data.getMatchTypes() != null && !data.getMatchTypes().isEmpty()) {
-                            matchTypeList = data.getMatchTypes();
+                        if (data != null && data.getTournamentRegTypes() != null && !data.getTournamentRegTypes().isEmpty()) {
+                            matchTypeList = data.getTournamentRegTypes();
 
                             Log.d(TAG, "  ✓ Loaded " + matchTypeList.size() + " match types");
 
-                            for (TourneyDetailResponse.MatchType mt : matchTypeList) {
-                                Log.d(TAG, "    - " + mt.getMatchTypeName() +
-                                        " (" + mt.getMatchTypeCode() + "): " +
-                                        mt.getNumberOfParticipant() + "/" + mt.getMaxParticipants());
+                            for (RegType mt : matchTypeList) {
+                                Log.d(TAG, "    - " + mt.getName() +
+                                        " (" + mt.getCode() + "): " +
+                                        mt.getNumberOfParticipants() + "/" + mt.getMaxParticipants() +
+                                        " [DetailID: " + mt.getTournamentDetailId() + "]");
                             }
 
                             setupMatchTypeSpinner();
@@ -682,7 +695,7 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<BaseResponse<TourneyDetailResponse>> call, Throwable t) {
+            public void onFailure(Call<BaseResponse<TourneyRegTypeResponse>> call, Throwable t) {
                 showLoading(false);
                 Log.e(TAG, "  ✗ API call failed: " + t.getMessage(), t);
                 showError("Lỗi kết nối: " + t.getMessage());
@@ -694,9 +707,9 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
         Log.d(TAG, "▶ setupMatchTypeSpinner()");
 
         List<String> matchTypeNames = new ArrayList<>();
-        for (TourneyDetailResponse.MatchType type : matchTypeList) {
-            String displayText = type.getMatchTypeName() +
-                    " (" + type.getNumberOfParticipant() + "/" + type.getMaxParticipants() + ")";
+        for (RegType type : matchTypeList) {
+            String displayText = type.getName() +
+                    " (" + type.getNumberOfParticipants() + "/" + type.getMaxParticipants() + ")";
 
             if (type.isFull()) {
                 displayText += " [ĐẦY]";
@@ -787,10 +800,9 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
         Log.d(TAG, "║                 handleSubmit() START                       ║");
         Log.d(TAG, "╚════════════════════════════════════════════════════════════╝");
 
-        // ✅ Ẩn tất cả lỗi trước khi validate
         hideAllErrors();
 
-        // ✅ 1. Validate match type selection
+        // 1. Validate match type selection
         int selectedPosition = spinnerRegType.getSelectedItemPosition();
         if (selectedPosition < 0 || selectedPosition >= matchTypeList.size()) {
             showFieldError(tvErrorMatchType, "Vui lòng chọn nội dung thi đấu");
@@ -798,61 +810,128 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
             return;
         }
 
-        TourneyDetailResponse.MatchType selectedType = matchTypeList.get(selectedPosition);
+        RegType selectedType = matchTypeList.get(selectedPosition);
 
-        // ✅ 2. Check if match type is full
-        if (selectedType.isFull()) {
-            showFieldError(tvErrorMatchType, "Nội dung thi đấu này đã đầy. Vui lòng chọn nội dung khác.");
-            spinnerRegType.requestFocus();
-            return;
-        }
-
-        // ✅ 3. Validate fixed fields
+        // 2. Basic UI validation - empty fields only
         if (!validateFixedFields()) {
             return;
         }
 
-        // ✅ 4. Validate giới tính theo match type
-        if (!validateGenderByMatchType(selectedType)) {
-            return;
-        }
-
-        // ✅ 5. Validate độ tuổi theo match type
-        if (!validateAgeByMatchType(selectedType)) {
-            return;
-        }
-
-        // ✅ 6. Validate dynamic form fields
-        if (formFields != null && !formFields.isEmpty()) {
-            int invalidFieldPosition = dynamicFormAdapter.validateAllFields();
-
-            if (invalidFieldPosition != -1) {
-                rvDynamicForm.smoothScrollToPosition(invalidFieldPosition);
-                TourneyRegConfigResponse invalidField = dynamicFormAdapter.getFieldAt(invalidFieldPosition);
-                if (invalidField != null) {
-                    Toast.makeText(this, "Vui lòng nhập: " + invalidField.getLabel(), Toast.LENGTH_LONG).show();
-                    Log.d(TAG, "  ✗ Validation failed at position " + invalidFieldPosition);
-                }
-                return;
-            }
-            Log.d(TAG, "  ✓ All dynamic form fields validated successfully");
-        }
-
-        // ✅ 7. Validate terms checkbox
+        // 3. Terms checkbox
         if (!cbTerms.isChecked()) {
             showFieldError(tvErrorTerms, "Vui lòng đồng ý với chính sách chia sẻ dữ liệu và bảo mật");
             cbTerms.requestFocus();
             return;
         }
 
-        Log.d(TAG, "  ✓ All validations passed");
-        navigateToConfirmation(selectedType);
+        Log.d(TAG, "  ✓ Basic UI validations passed - Backend will handle business logic validation");
+        
+        // Call tourney-reg API - Backend will validate: age, gender, full status, point ranking, etc.
+        callTourneyRegApi(selectedType);
+    }
+
+    /**
+     * Call tourney-reg API to register tournament
+     * On success, navigate to confirmation with orderId
+     */
+    private void callTourneyRegApi(RegType selectedMatchType) {
+        Log.d(TAG, "╔════════════════════════════════════════════════════════════╗");
+        Log.d(TAG, "║              callTourneyRegApi() START                     ║");
+        Log.d(TAG, "╚════════════════════════════════════════════════════════════╝");
+
+        showLoading(true);
+
+        // Build request
+        TourneyRegRequest request = new TourneyRegRequest();
+        request.setUserId(currentUserId);
+        request.setTournamentId(tournamentId);
+        request.setTournamentDetailId(selectedMatchType.getTournamentDetailId());
+        request.setMatchType(selectedMatchType.getCode()); // ✅ CRITICAL: Send CODE (SINGLE_FEMALE, DOUBLE_MALE, etc.), NOT name
+
+        // Build player list
+        List<TourneyRegUser> users = new ArrayList<>();
+        TourneyRegUser user = new TourneyRegUser();
+        user.setUsername(etFullName.getText().toString().trim());
+        user.setPhoneNumber(etPhone.getText().toString().trim());
+        user.setEmail(etEmail.getText().toString().trim());
+        user.setGender(rbMale.isChecked() ? "1" : "0");
+        
+        // Convert date from dd/MM/yyyy to dd-MM-yyyy
+        String dateOfBirth = etDateOfBirth.getText().toString().trim();
+        user.setDateOfBirth(convertDateFormat(dateOfBirth));
+        user.setPointRanking(null);
+        user.setUserIdAlias(tokenManager.getUserIdAlias()); // ✅ Dùng userIdAlias từ TokenManager (VD: "10000J"), KHÔNG PHẢI userId
+
+        users.add(user);
+        request.setTourneyRegUsers(users);
+
+        Log.d(TAG, "  Request: userId=" + currentUserId + ", tournamentDetailId=" + selectedMatchType.getTournamentDetailId());
+        Log.d(TAG, "  Match type CODE: " + selectedMatchType.getCode() + ", NAME: " + selectedMatchType.getName());
+
+        Call<BaseResponse<TourneyRegResponse>> call = tournamentApiService.registerTournament(request);
+
+        call.enqueue(new Callback<BaseResponse<TourneyRegResponse>>() {
+            @Override
+            public void onResponse(Call<BaseResponse<TourneyRegResponse>> call,
+                                   Response<BaseResponse<TourneyRegResponse>> response) {
+                showLoading(false);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    BaseResponse<TourneyRegResponse> baseResponse = response.body();
+
+                    if ("00".equals(baseResponse.getCode())) {
+                        TourneyRegResponse data = baseResponse.getData();
+                        String orderId = data.getOrderId();
+
+                        Log.d(TAG, "  ✓ Registration success! orderId: " + orderId);
+                        Log.d(TAG, "  Entry fee: " + data.getEntryFee());
+
+                        // Navigate to confirmation with orderId
+                        navigateToConfirmation(selectedMatchType, orderId, data.getEntryFee());
+                    } else {
+                        String errorMsg = baseResponse.getMessage();
+                        Log.e(TAG, "  ✗ Registration failed: " + errorMsg);
+                        showError(errorMsg != null ? errorMsg : "Đăng ký thất bại");
+                    }
+                } else {
+                    Log.e(TAG, "  ✗ Response unsuccessful: " + response.code());
+                    showError("Lỗi server: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<BaseResponse<TourneyRegResponse>> call, Throwable t) {
+                showLoading(false);
+                Log.e(TAG, "  ✗ API call failed", t);
+                showError("Lỗi kết nối: " + t.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Convert date format from dd/MM/yyyy to dd-MM-yyyy for API
+     */
+    private String convertDateFormat(String dateStr) {
+        if (dateStr == null || dateStr.isEmpty()) {
+            return null;
+        }
+
+        try {
+            SimpleDateFormat displayFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            SimpleDateFormat apiFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
+
+            Date date = displayFormat.parse(dateStr);
+            return apiFormat.format(date);
+        } catch (Exception e) {
+            Log.e(TAG, "Error converting date format: " + dateStr, e);
+            return dateStr;
+        }
     }
 
     /**
      * ✅ Navigate to TournamentConfirmationActivity với data
      */
-    private void navigateToConfirmation(TourneyDetailResponse.MatchType selectedMatchType) {
+    private void navigateToConfirmation(RegType selectedMatchType, String orderId, String entryFee) {
         Log.d(TAG, "╔════════════════════════════════════════════════════════════╗");
         Log.d(TAG, "║            navigateToConfirmation()                        ║");
         Log.d(TAG, "╚════════════════════════════════════════════════════════════╝");
@@ -861,28 +940,30 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
 
         // Tournament Info
         intent.putExtra("tournamentId", tournamentId);
+        intent.putExtra("tournamentDetailId", selectedMatchType.getTournamentDetailId()); // ✅ From RegType
         intent.putExtra("tournamentName", tournamentName);
         intent.putExtra("tournamentDate", getIntent().getStringExtra("tournamentDate"));
         intent.putExtra("tournamentLocation", getIntent().getStringExtra("tournamentLocation"));
 
         // Match Type Info
-        intent.putExtra("matchTypeName", selectedMatchType.getMatchTypeName());
-        intent.putExtra("matchTypeCode", selectedMatchType.getMatchTypeCode());
+        intent.putExtra("matchTypeId", selectedMatchType.getTournamentDetailId());
+        intent.putExtra("matchTypeName", selectedMatchType.getName());
+        intent.putExtra("matchTypeCode", selectedMatchType.getCode());
 
-        // Registration Fee
-        String feeToUse = getIntent().getStringExtra("registrationFee");
-        if (feeToUse == null || feeToUse.isEmpty() || "0".equals(feeToUse)) {
-            feeToUse = String.valueOf(registrationFee);
-        }
-        intent.putExtra("registrationFee", feeToUse);
-        Log.d(TAG, "  ✓ Registration Fee: " + feeToUse);
+        // Registration data from API
+        intent.putExtra("orderId", orderId); // ✅ IMPORTANT: orderId from tourney-reg API
+        intent.putExtra("registrationFee", entryFee); // Use fee from API response
+        Log.d(TAG, "  ✓ Registration Fee: " + entryFee);
 
         // Player Info (Fixed Fields)
         intent.putExtra("playerName", etFullName.getText().toString().trim());
-        intent.putExtra("playerDateOfBirth", etDateOfBirth.getText().toString().trim()); // ✅ THÊM MỚI
+        intent.putExtra("playerDateOfBirth", etDateOfBirth.getText().toString().trim()); // ✅ dd/MM/yyyy format
         intent.putExtra("playerPhone", etPhone.getText().toString().trim());
         intent.putExtra("playerEmail", etEmail.getText().toString().trim());
-        intent.putExtra("playerGender", rbMale.isChecked() ? "Nam" : "Nữ");
+        
+        // Gender - Convert to API format (0 or 1)
+        String genderApi = rbMale.isChecked() ? "1" : "0"; // ✅ 1=Male, 0=Female
+        intent.putExtra("playerGender", genderApi);
 
         // Dynamic Form Data - Convert to JSON string
         try {
@@ -926,8 +1007,8 @@ public class TournamentRegistrationActivity extends AppCompatActivity {
         return true;
     }
 
-    private boolean validateGenderByMatchType(TourneyDetailResponse.MatchType matchType) {
-        String matchTypeName = matchType.getMatchTypeName().toLowerCase();
+    private boolean validateGenderByMatchType(RegType matchType) {
+        String matchTypeName = matchType.getName().toLowerCase();
         boolean isMaleSelected = rbMale.isChecked();
         boolean isFemaleSelected = rbFemale.isChecked();
 

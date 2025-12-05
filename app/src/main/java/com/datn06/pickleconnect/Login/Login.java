@@ -97,7 +97,8 @@ public class Login extends AppCompatActivity {
                                 data.getUserName(),                   // username
                                 data.getFullName(),                   // fullName
                                 data.getEmail(),                      // email
-                                data.getPhoneNumber()                 // phoneNumber ✅ THÊM
+                                data.getPhoneNumber(),                // phoneNumber ✅
+                                null                                  // userIdAlias ✅ (sẽ được load sau từ member-info)
                         );
 
                         // ALSO save to SharedPrefManager (used by BookingConfirmActivity)

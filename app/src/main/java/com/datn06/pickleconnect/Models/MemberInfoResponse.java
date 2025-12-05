@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 
 public class MemberInfoResponse {
     private String userId;
+    private String userIdAlias; // ✅ Player code (VD: "10000J")
     private String username;
     private String email;
     private String phoneNumber;
@@ -24,6 +25,8 @@ public class MemberInfoResponse {
     // Getters and Setters
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
+    public String getUserIdAlias() { return userIdAlias; } // ✅
+    public void setUserIdAlias(String userIdAlias) { this.userIdAlias = userIdAlias; } // ✅
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
     public String getEmail() { return email; }

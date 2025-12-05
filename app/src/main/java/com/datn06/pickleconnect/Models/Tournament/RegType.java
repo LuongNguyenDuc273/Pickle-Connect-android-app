@@ -6,20 +6,17 @@ public class RegType {
     @SerializedName("tournamentDetailId")
     private String tournamentDetailId;
 
-    @SerializedName("matchTypeCode")
-    private String matchTypeCode;
+    @SerializedName("code")
+    private String code;
 
-    @SerializedName("matchTypeName")
-    private String matchTypeName;
+    @SerializedName("name")
+    private String name;
 
-    @SerializedName("currentRegistrations")
-    private int currentRegistrations;
+    @SerializedName("numberOfParticipants")
+    private String numberOfParticipants;
 
     @SerializedName("maxParticipants")
-    private int maxParticipants;
-
-    @SerializedName("entryFee")
-    private String entryFee;
+    private String maxParticipants;
 
     // Getters and Setters
     public String getTournamentDetailId() { return tournamentDetailId; }
@@ -27,31 +24,36 @@ public class RegType {
         this.tournamentDetailId = tournamentDetailId;
     }
 
-    public String getMatchTypeCode() { return matchTypeCode; }
-    public void setMatchTypeCode(String matchTypeCode) { this.matchTypeCode = matchTypeCode; }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
 
-    public String getMatchTypeName() { return matchTypeName; }
-    public void setMatchTypeName(String matchTypeName) { this.matchTypeName = matchTypeName; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public int getCurrentRegistrations() { return currentRegistrations; }
-    public void setCurrentRegistrations(int currentRegistrations) {
-        this.currentRegistrations = currentRegistrations;
+    public String getNumberOfParticipants() { return numberOfParticipants; }
+    public void setNumberOfParticipants(String numberOfParticipants) {
+        this.numberOfParticipants = numberOfParticipants;
     }
 
-    public int getMaxParticipants() { return maxParticipants; }
-    public void setMaxParticipants(int maxParticipants) {
+    public String getMaxParticipants() { return maxParticipants; }
+    public void setMaxParticipants(String maxParticipants) {
         this.maxParticipants = maxParticipants;
     }
 
-    public String getEntryFee() { return entryFee; }
-    public void setEntryFee(String entryFee) { this.entryFee = entryFee; }
-
-    // Helper method
+    // Helper methods
     public boolean isFull() {
-        return currentRegistrations >= maxParticipants;
+        try {
+            int current = Integer.parseInt(numberOfParticipants != null ? numberOfParticipants : "0");
+            int max = Integer.parseInt(maxParticipants != null ? maxParticipants : "0");
+            return current >= max;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     public String getAvailabilityText() {
-        return currentRegistrations + "/" + maxParticipants;
+        String current = numberOfParticipants != null ? numberOfParticipants : "0";
+        String max = maxParticipants != null ? maxParticipants : "0";
+        return current + "/" + max;
     }
 }

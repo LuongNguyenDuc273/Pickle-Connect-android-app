@@ -647,7 +647,8 @@ public class ProfileFragment extends Fragment {
                                 tokenManager.getUsername(),
                                 fullName,
                                 tokenManager.getEmail(),
-                                tokenManager.getPhoneNumber()
+                                tokenManager.getPhoneNumber(),
+                                tokenManager.getUserIdAlias()
                         );
 
                         AlertHelper.showSuccess(requireActivity(), "Cập nhật thành công");

@@ -3,7 +3,7 @@ package com.datn06.pickleconnect.Models.Tournament;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
-public class TourneyRegTypeResponse extends BaseTournamentRequest{
+public class TourneyRegTypeResponse {
     @SerializedName("tournamentRegTypes")
     private List<RegType> tournamentRegTypes;
 

@@ -1,5 +1,6 @@
 package com.datn06.pickleconnect.Model;
 
+import com.datn06.pickleconnect.API.AppConfig;
 import com.google.gson.annotations.SerializedName;
 import java.math.BigDecimal;
 import java.util.List;
@@ -199,7 +200,9 @@ public class FacilityDTO {
     // Helper method to get first image
     public String getFirstImageUrl() {
         if (imageUrls != null && !imageUrls.isEmpty()) {
-            return imageUrls.get(0);
+            String url = imageUrls.get(0);
+            // ✅ Fix localhost URLs for emulator
+            return AppConfig.fixImageUrl(url);
         }
         return null;
     }

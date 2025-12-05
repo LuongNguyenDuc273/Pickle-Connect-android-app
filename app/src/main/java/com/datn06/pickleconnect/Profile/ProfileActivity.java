@@ -271,7 +271,8 @@ public class ProfileActivity extends AppCompatActivity {
                     data.getUsername(),
                     data.getFullName(),
                     data.getEmail(),
-                    data.getPhoneNumber()
+                    data.getPhoneNumber(),
+                    data.getUserIdAlias()
             );
 
             // Update fragment if visible
