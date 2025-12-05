@@ -69,33 +69,7 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Image ViewPager với Indicator -->
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="280dp"
-                android:layout_marginTop="8dp"
-                android:background="@android:color/white"
-                android:padding="16dp">
-
-                <androidx.viewpager2.widget.ViewPager2
-                    android:id="@+id/viewPagerImages"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="#E5E7EB"
-                    android:clipToPadding="false"
-                    android:elevation="2dp" />
-
-                <!-- Page Indicator -->
-                <LinearLayout
-                    android:id="@+id/layoutIndicator"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentBottom="true"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginBottom="16dp"
-                    android:orientation="horizontal"
-                    android:padding="8dp" />
-            </RelativeLayout>
+            <!-- ✅ ĐÃ BỎ: Image ViewPager với Indicator -->
 
             <!-- Giới thiệu sân -->
             <LinearLayout
@@ -246,7 +220,6 @@
                         android:textSize="36sp"
                         android:textStyle="bold" />
 
-                    <!-- ✅ THAY ĐỔI: Thêm android:id cho LinearLayout chứa sao -->
                     <LinearLayout
                         android:id="@+id/layoutStars"
                         android:layout_width="wrap_content"
@@ -254,7 +227,6 @@
                         android:layout_marginStart="16dp"
                         android:orientation="horizontal">
 
-                        <!-- ✅ XÓA các ImageView fix cứng -->
                         <!-- Các sao sẽ được thêm động từ Java code -->
 
                     </LinearLayout>
@@ -310,7 +282,6 @@
             android:id="@+id/btnFavorite"
             android:layout_width="40dp"
             android:layout_height="56dp"
-
             android:src="@drawable/ic_favorite"
             app:tint="#6B7280" />
     </LinearLayout>

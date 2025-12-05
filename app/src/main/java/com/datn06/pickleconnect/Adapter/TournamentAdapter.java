@@ -19,6 +19,8 @@ import com.datn06.pickleconnect.Models.Tournament.TourneyListResponse;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -61,11 +63,14 @@ public class TournamentAdapter extends RecyclerView.Adapter<TournamentAdapter.To
         if (tournaments != null) {
             this.tournamentList.addAll(tournaments);
 
+            // ✅ Sắp xếp theo startDate - Gần nhất lên đầu
+            sortByStartDate();
+
             // Log chi tiết từng tournament
-            for (int i = 0; i < tournaments.size(); i++) {
-                TourneyListResponse t = tournaments.get(i);
+            for (int i = 0; i < this.tournamentList.size(); i++) {
+                TourneyListResponse t = this.tournamentList.get(i);
                 Log.d(TAG, "  [" + i + "] " + t.getTournamentName() +
-                        " (ID: " + t.getTournamentId() + ")");
+                        " (ID: " + t.getTournamentId() + ", StartDate: " + t.getStartDate() + ")");
             }
         }
 
@@ -84,17 +89,90 @@ public class TournamentAdapter extends RecyclerView.Adapter<TournamentAdapter.To
             int startPosition = this.tournamentList.size();
             this.tournamentList.addAll(tournaments);
 
+            // ✅ Sắp xếp lại toàn bộ danh sách theo startDate
+            sortByStartDate();
+
             Log.d(TAG, "Added " + tournaments.size() + " items");
-            Log.d(TAG, "Start position: " + startPosition);
-            Log.d(TAG, "Calling notifyItemRangeInserted(" + startPosition + ", " + tournaments.size() + ")");
+            Log.d(TAG, "Total size after sort: " + this.tournamentList.size());
 
-            notifyItemRangeInserted(startPosition, tournaments.size());
-
-            Log.d(TAG, "New total size: " + this.tournamentList.size());
+            // Gọi notifyDataSetChanged vì thứ tự có thể thay đổi
+            notifyDataSetChanged();
         } else {
             Log.w(TAG, "addTournaments called with null or empty list");
         }
         Log.d(TAG, "========================================");
+    }
+
+    /**
+     * Sắp xếp danh sách giải đấu theo startDate
+     * Giải đấu có startDate GẦN NHẤT (sắp diễn ra sớm nhất) sẽ ở đầu danh sách
+     */
+    private void sortByStartDate() {
+        Collections.sort(this.tournamentList, new Comparator<TourneyListResponse>() {
+            @Override
+            public int compare(TourneyListResponse t1, TourneyListResponse t2) {
+                try {
+                    // Parse startDate của cả 2 tournament
+                    Date date1 = parseDate(t1.getStartDate());
+                    Date date2 = parseDate(t2.getStartDate());
+
+                    // Nếu cả 2 đều null, coi như bằng nhau
+                    if (date1 == null && date2 == null) return 0;
+
+                    // Nếu date1 null, đẩy xuống cuối
+                    if (date1 == null) return 1;
+
+                    // Nếu date2 null, đẩy xuống cuối
+                    if (date2 == null) return -1;
+
+                    // ✅ Sắp xếp TĂNG DẦN (ngày gần nhất lên đầu)
+                    // date1.compareTo(date2) -> ngày nhỏ hơn (gần hơn) lên trước
+                    return date1.compareTo(date2);
+
+                } catch (Exception e) {
+                    Log.e(TAG, "Error comparing dates", e);
+                    return 0;
+                }
+            }
+        });
+
+        Log.d(TAG, "✓ Sorted by startDate (nearest first)");
+    }
+
+    /**
+     * Parse date từ String sang Date
+     * Hỗ trợ nhiều format khác nhau
+     */
+    private Date parseDate(String dateStr) {
+        if (dateStr == null || dateStr.isEmpty()) {
+            return null;
+        }
+
+        // Thử parse với format "dd-MM-yyyy HH:mm:ss"
+        try {
+            return INPUT_DATE_FORMAT.parse(dateStr);
+        } catch (ParseException e) {
+            Log.w(TAG, "Failed to parse with INPUT_DATE_FORMAT: " + dateStr);
+        }
+
+        // Thử parse với format ISO 8601 (yyyy-MM-dd'T'HH:mm:ss)
+        try {
+            SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
+            return isoFormat.parse(dateStr);
+        } catch (ParseException e) {
+            Log.w(TAG, "Failed to parse with ISO format: " + dateStr);
+        }
+
+        // Thử parse với format khác (yyyy-MM-dd HH:mm:ss)
+        try {
+            SimpleDateFormat altFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            return altFormat.parse(dateStr);
+        } catch (ParseException e) {
+            Log.w(TAG, "Failed to parse with alternative format: " + dateStr);
+        }
+
+        Log.e(TAG, "Could not parse date: " + dateStr);
+        return null;
     }
 
     public void clear() {
