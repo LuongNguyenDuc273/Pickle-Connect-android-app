@@ -317,12 +317,12 @@ public class SetPasswordActivity extends AppCompatActivity {
                         ApiClient.setAuthToken(token);
 
                         Toast.makeText(SetPasswordActivity.this, 
-                            "Đăng ký và đăng nhập thành công! Xin chào " + fullName, 
+                            "Đăng ký thành công! Xin chào " + fullName,
                             Toast.LENGTH_SHORT).show();
 
                         // Navigate to Home
                         new android.os.Handler().postDelayed(() -> {
-                            Intent intent = new Intent(SetPasswordActivity.this, HomeActivity.class);
+                            Intent intent = new Intent(SetPasswordActivity.this, LoginActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(intent);
                             finish();

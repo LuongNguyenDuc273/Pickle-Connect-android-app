@@ -1,5 +1,6 @@
 package com.datn06.pickleconnect.Models.Tournament;
 
+import com.datn06.pickleconnect.API.AppConfig;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
@@ -82,7 +83,8 @@ public class TourneyDetailResponse {
         private String imageUrl;
 
         public String getImageUrl() {
-            return imageUrl;
+            // ✅ Fix localhost URLs for emulator
+            return AppConfig.fixImageUrl(imageUrl);
         }
 
         public void setImageUrl(String imageUrl) {

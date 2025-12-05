@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.datn06.pickleconnect.API.AppConfig;
 import com.datn06.pickleconnect.R;
 import com.datn06.pickleconnect.Models.Tournament.TourneyListResponse;
 
@@ -327,9 +328,10 @@ public class TournamentAdapter extends RecyclerView.Adapter<TournamentAdapter.To
             tvDate.setText(dateRange);
             Log.d(TAG, "    Date: " + dateRange);
 
-            // Load tournament image
-            loadImage(ivTournamentImage, tournament.getTournamentImg(), R.drawable.banner_placeholder);
-            Log.d(TAG, "    Tournament image URL: " + tournament.getTournamentImg());
+            // Load tournament image (get first image from array)
+            String tournamentImageUrl = tournament.getFirstTournamentImageUrl();
+            loadImage(ivTournamentImage, tournamentImageUrl, R.drawable.banner_placeholder);
+            Log.d(TAG, "    Tournament image URL: " + tournamentImageUrl);
 
             // Load organizer logo
             loadImage(ivOrganizerLogo, tournament.getOrganizerLogo(), R.drawable.logo_atp);
@@ -364,9 +366,11 @@ public class TournamentAdapter extends RecyclerView.Adapter<TournamentAdapter.To
 
         private void loadImage(ImageView imageView, String imageUrl, int placeholder) {
             if (imageUrl != null && !imageUrl.isEmpty()) {
-                Log.d(TAG, "      Loading image from URL: " + imageUrl);
+                // ✅ Fix localhost URLs for emulator
+                String fixedUrl = AppConfig.fixImageUrl(imageUrl);
+                Log.d(TAG, "      Loading image from URL: " + fixedUrl);
                 Glide.with(context)
-                        .load(imageUrl)
+                        .load(fixedUrl)
                         .placeholder(placeholder)
                         .error(placeholder)
                         .transition(DrawableTransitionOptions.withCrossFade())

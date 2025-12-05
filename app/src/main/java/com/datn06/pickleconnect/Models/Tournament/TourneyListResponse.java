@@ -1,5 +1,6 @@
 package com.datn06.pickleconnect.Models.Tournament;
 
+import com.datn06.pickleconnect.API.AppConfig;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
@@ -106,7 +107,8 @@ public class TourneyListResponse {
         private String imageUrl;
 
         public String getImageUrl() {
-            return imageUrl;
+            // ✅ Fix localhost URLs for emulator
+            return AppConfig.fixImageUrl(imageUrl);
         }
 
         public void setImageUrl(String imageUrl) {
@@ -217,6 +219,20 @@ public class TourneyListResponse {
 
     public void setTournamentImages(List<ImageList> tournamentImages) {
         this.tournamentImages = tournamentImages;
+    }
+
+    /**
+     * Get first tournament image URL from the tournamentImages array
+     * @return First image URL if available, otherwise null
+     */
+    public String getFirstTournamentImageUrl() {
+        if (tournamentImages != null && !tournamentImages.isEmpty()) {
+            ImageList firstImage = tournamentImages.get(0);
+            if (firstImage != null) {
+                return firstImage.getImageUrl(); // Already fixed with AppConfig.fixImageUrl
+            }
+        }
+        return null;
     }
 
     public int getSingleMaleParticipants() {
