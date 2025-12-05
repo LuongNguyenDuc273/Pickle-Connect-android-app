@@ -19,6 +19,7 @@ import com.datn06.pickleconnect.API.ApiClient;
 import com.datn06.pickleconnect.API.CourtApiService;
 import com.datn06.pickleconnect.API.ServiceHost;
 import com.datn06.pickleconnect.Common.BaseResponse;
+import com.datn06.pickleconnect.Event.EventDetailActivity;
 import com.datn06.pickleconnect.Event.EventsActivity;
 import com.datn06.pickleconnect.Model.FieldAvailabilityDTO;
 import com.datn06.pickleconnect.Model.FieldBookingResponse;
@@ -358,16 +359,21 @@ public class FieldSelectionActivity extends AppCompatActivity {
         );
         params.setMargins(dpToPx(1), 0, 0, 0);
         cell.setLayoutParams(params);
-        cell.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
 
-        // Event style - Pink background
+        // ✅ THÊM PADDING GIỐNG CÁC CELL KHÁC
+        cell.setPadding(dpToPx(2), dpToPx(4), dpToPx(2), dpToPx(4));
+
+        // ✅ SET BORDER TRƯỚC KHI SET BACKGROUND COLOR
+        cell.setBackground(ContextCompat.getDrawable(this, R.drawable.cell_border));
+
+        // Event style - Pink background (set sau khi có border)
         cell.setBackgroundColor(Color.parseColor("#FF4081"));
         cell.setTextColor(Color.WHITE);
         cell.setText("Sự kiện\n" + formatCurrency(slot.getTicketPrice()));
         cell.setMaxLines(2);
 
-        // Click to navigate to event booking
-        cell.setOnClickListener(v -> navigateToEventBooking(slot.getEventId()));
+        // ✅ Click to navigate to EVENT DETAIL instead of EventsActivity
+        cell.setOnClickListener(v -> navigateToEventDetail(slot.getEventId()));
 
         return cell;
     }
@@ -722,5 +728,28 @@ public class FieldSelectionActivity extends AppCompatActivity {
 
     private int getFieldNameTextSize() {
         return Math.round(12 + (cellWidthDp - MIN_CELL_WIDTH) * 4f / (MAX_CELL_WIDTH - MIN_CELL_WIDTH));
+    }
+
+    private void navigateToEventDetail(String eventId) {
+        if (eventId == null || eventId.equals("null")) {
+            Toast.makeText(this, "Không tìm thấy thông tin sự kiện", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // TODO: Replace with your actual EventDetailActivity
+        Intent intent = new Intent(this, EventDetailActivity.class);
+        intent.putExtra("eventId", eventId);
+        intent.putExtra("facilityId", facilityId);
+        intent.putExtra("facilityName", facilityName);
+        intent.putExtra("bookingDate", formatDateForApi(selectedDate));
+        startActivity(intent);
+
+        // Alternative: If you want to open EventsActivity with auto-selected event
+        // Intent intent = new Intent(this, EventsActivity.class);
+        // intent.putExtra("facilityId", facilityId);
+        // intent.putExtra("facilityName", facilityName);
+        // intent.putExtra("selectedEventId", eventId); // Auto select this event
+        // intent.putExtra("bookingDate", formatDateForApi(selectedDate));
+        // startActivity(intent);
     }
 }

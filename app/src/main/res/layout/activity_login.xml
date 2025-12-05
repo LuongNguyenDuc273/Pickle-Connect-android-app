@@ -72,6 +72,8 @@
             app:boxCornerRadiusTopEnd="8dp"
             app:boxCornerRadiusTopStart="8dp"
             app:boxStrokeColor="#CCCCCC"
+            app:errorEnabled="true"
+            app:errorTextColor="#FF0000"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvUsernameLabel">
@@ -87,6 +89,20 @@
                 android:textSize="14sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- TextView hiển thị lỗi API (Sai tài khoản/mật khẩu) BÊN DƯỚI Username -->
+        <TextView
+            android:id="@+id/tvLoginError"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Sai tài khoản hoặc mật khẩu"
+            android:textColor="#FF0000"
+            android:textSize="14sp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tilUsername" />
+
         <!-- Label Mật khẩu -->
         <TextView
             android:id="@+id/tvPasswordLabel"
@@ -97,7 +113,7 @@
             android:textColor="#000000"
             android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tilUsername" />
+            app:layout_constraintTop_toBottomOf="@id/tvLoginError" />
 
         <TextView
             android:id="@+id/tvPasswordRequired"
@@ -111,14 +127,16 @@
             app:layout_constraintStart_toEndOf="@id/tvPasswordLabel"
             app:layout_constraintTop_toTopOf="@id/tvPasswordLabel" />
 
-        <!-- Link Quên mật khẩu -->
+        <!-- Link Quên mật khẩu (bên phải label) -->
         <TextView
-            android:id="@+id/tvForgotPassword"
+            android:id="@+id/tvForgotPasswordTop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Quên mật khẩu?"
             android:textColor="#00BFA5"
             android:textSize="14sp"
+            android:clickable="true"
+            android:focusable="true"
             app:layout_constraintBottom_toBottomOf="@id/tvPasswordLabel"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/tvPasswordLabel" />
@@ -136,6 +154,8 @@
             app:boxCornerRadiusTopStart="8dp"
             app:boxStrokeColor="#CCCCCC"
             app:endIconMode="password_toggle"
+            app:errorEnabled="true"
+            app:errorTextColor="#FF0000"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvPasswordLabel">
@@ -150,22 +170,6 @@
                 android:textColor="#000000"
                 android:textSize="14sp" />
         </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- ===============================================================
-             ProgressBar - THÊM MỚI
-             Hiển thị khi đang login, ẩn khi không dùng
-             =============================================================== -->
-        <ProgressBar
-            android:id="@+id/progressBar"
-            style="?android:attr/progressBarStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:indeterminateTint="#00BFA5"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tilPassword" />
 
         <!-- Nút Đăng nhập -->
         <com.google.android.material.button.MaterialButton
@@ -183,7 +187,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tilPassword" />
 
-        <!-- Forgot Password Link -->
+        <!-- Link Quên mật khẩu (dưới button) -->
         <TextView
             android:id="@+id/tvForgotPassword"
             android:layout_width="wrap_content"
@@ -199,7 +203,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/btnLogin" />
 
-        <!-- Spacer để đẩy phần đăng ký xuống cuối -->
+        <!-- Spacer -->
         <View
             android:id="@+id/spacer"
             android:layout_width="0dp"
@@ -208,7 +212,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvForgotPassword" />
 
-        <!-- Section Đăng ký - Nằm ngang, dễ nhìn -->
+        <!-- Section Đăng ký -->
         <LinearLayout
             android:id="@+id/llRegisterSection"
             android:layout_width="wrap_content"
