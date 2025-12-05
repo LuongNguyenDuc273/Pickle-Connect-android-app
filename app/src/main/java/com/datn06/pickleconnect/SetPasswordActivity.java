@@ -322,7 +322,7 @@ public class SetPasswordActivity extends AppCompatActivity {
 
                         // Navigate to Home
                         new android.os.Handler().postDelayed(() -> {
-                            Intent intent = new Intent(SetPasswordActivity.this, LoginActivity.class);
+                            Intent intent = new Intent(SetPasswordActivity.this, Login.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(intent);
                             finish();
