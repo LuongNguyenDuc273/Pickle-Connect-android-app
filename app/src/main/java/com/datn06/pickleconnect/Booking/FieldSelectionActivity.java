@@ -70,6 +70,7 @@ public class FieldSelectionActivity extends AppCompatActivity {
     private FieldBookingResponse fieldBookingData;
     private final List<SelectedSlotDTO> selectedSlots = new ArrayList<>();
     private List<String> uniqueTimeSlots = new ArrayList<>();
+    private List<TimeSlotDTO> referenceSlots = new ArrayList<>(); // Store reference slots for labels
 
     // Cell dimensions - now variable for zoom
     private int cellWidthDp = 80;
@@ -248,11 +249,15 @@ public class FieldSelectionActivity extends AppCompatActivity {
      */
     private void extractUniqueTimeSlots() {
         Set<String> timeSet = new LinkedHashSet<>();
+        referenceSlots.clear();
 
         for (FieldAvailabilityDTO field : fieldBookingData.getFields()) {
             if (field.getTimeSlots() != null) {
                 for (TimeSlotDTO slot : field.getTimeSlots()) {
-                    timeSet.add(slot.getStartTime());
+                    if (!timeSet.contains(slot.getStartTime())) {
+                        timeSet.add(slot.getStartTime());
+                        referenceSlots.add(slot); // Store first occurrence for label reference
+                    }
                 }
             }
         }
@@ -273,9 +278,12 @@ public class FieldSelectionActivity extends AppCompatActivity {
         emptyCell.setBackgroundColor(Color.parseColor("#E0E0E0"));
         layoutTimeHeader.addView(emptyCell);
 
-        // Add time headers
-        for (String timeSlot : uniqueTimeSlots) {
-            TextView timeCell = createHeaderCell(formatTimeLabel(timeSlot));
+        // Add time headers using slotLabel from API
+        for (int i = 0; i < uniqueTimeSlots.size(); i++) {
+            TimeSlotDTO refSlot = referenceSlots.get(i);
+            // Use slotLabel from API (e.g., "07:00 - 08:00", "08:00 - 09:30", etc.)
+            String label = refSlot.getSlotLabel();
+            TextView timeCell = createHeaderCell(label);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     dpToPx(cellWidthDp),
                     dpToPx(cellHeightDp)
@@ -351,7 +359,7 @@ public class FieldSelectionActivity extends AppCompatActivity {
         cell.setGravity(Gravity.CENTER);
         cell.setTextSize(getSlotTextSize());
 
-        // Calculate width for merged cell
+        // Calculate width for merged cell (include margins between cells)
         int totalWidth = dpToPx(cellWidthDp * spanCount + (spanCount - 1)); // Include margins
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 totalWidth,
@@ -360,19 +368,16 @@ public class FieldSelectionActivity extends AppCompatActivity {
         params.setMargins(dpToPx(1), 0, 0, 0);
         cell.setLayoutParams(params);
 
-        // ✅ THÊM PADDING GIỐNG CÁC CELL KHÁC
+        // Match padding with regular cells
         cell.setPadding(dpToPx(2), dpToPx(4), dpToPx(2), dpToPx(4));
 
-        // ✅ SET BORDER TRƯỚC KHI SET BACKGROUND COLOR
-        cell.setBackground(ContextCompat.getDrawable(this, R.drawable.cell_border));
-
-        // Event style - Pink background (set sau khi có border)
+        // Event style - Pink background with border
         cell.setBackgroundColor(Color.parseColor("#FF4081"));
         cell.setTextColor(Color.WHITE);
         cell.setText("Sự kiện\n" + formatCurrency(slot.getTicketPrice()));
         cell.setMaxLines(2);
 
-        // ✅ Click to navigate to EVENT DETAIL instead of EventsActivity
+        // Click to navigate to EVENT DETAIL
         cell.setOnClickListener(v -> navigateToEventDetail(slot.getEventId()));
 
         return cell;
@@ -562,7 +567,7 @@ public class FieldSelectionActivity extends AppCompatActivity {
                 .map(SelectedSlotDTO::getPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        double totalHours = selectedSlots.size() * 0.5;
+        double totalHours = selectedSlots.size();
 
         Intent intent = new Intent(this, BookingConfirmActivity.class);
         intent.putExtra("selectedSlots", new Gson().toJson(selectedSlots));
@@ -657,29 +662,6 @@ public class FieldSelectionActivity extends AppCompatActivity {
     private String formatDateForApi(Calendar date) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         return sdf.format(date.getTime());
-    }
-
-    private String formatTimeLabel(String startTime) {
-        try {
-            String[] parts = startTime.split(":");
-            int startHour = Integer.parseInt(parts[0]);
-            int startMinute = Integer.parseInt(parts[1]);
-
-            int endHour = startHour;
-            int endMinute = startMinute + 30;
-
-            if (endMinute >= 60) {
-                endHour++;
-                endMinute -= 60;
-            }
-
-            String start = startHour + ":" + String.format("%02d", startMinute);
-            String end = endHour + ":" + String.format("%02d", endMinute);
-
-            return start + "-" + end;
-        } catch (Exception e) {
-            return startTime;
-        }
     }
 
     private String formatCurrency(BigDecimal amount) {
